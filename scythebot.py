@@ -1,19 +1,22 @@
 # bot.py
 import os
 import random
-
+import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.default()
+intents.members = True
+
+bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
   print('Logged in as ScytheBot')
-  print('ScytheBot alpha003')
+  print('ScytheBot alpha004')
   print('----------')
 
 fact_ori = ['Rusviet', 'Crimean', 'Polania', 'Nordic', 'Saxony']
@@ -30,17 +33,19 @@ rank_mechanical = [6,6,4,3,4,1,1]
 rank_agricultural = [5,4,4,3,2,2,3]
 rank_militant = [7,7,5,3,4,4,3]
 rank_innovative = [7,7,6,5,6,4,4]
-joinlist = []
+joinlist = {}
 
 async def generate(g_players, g_penalty: int, g_full: int, banned_rank: int):
   if (g_full == 1):
     factions = fact_full
+    mats = mats_full
+    if (len(g_players) > 7):
+        g_players = g_players[0:7]
   else:
     factions = fact_ori
-  if (g_full == 1):
-    mats = mats_full
-  else:
     mats = mats_ori
+    if (len(g_players) > 5):
+        g_players = g_players[0:5]
   random.shuffle(g_players)
   random.shuffle(factions)
   random.shuffle(mats)
@@ -55,8 +60,8 @@ async def generate(g_players, g_penalty: int, g_full: int, banned_rank: int):
     penalty_list.append(g_penalty * rank_index[i])
   penalty_offset = [pen - min(penalty_list) for pen in penalty_list]
   if (max(rank_index) >= banned_rank):
-    generate(g_players, g_penalty, g_full, banned_rank)
-    return
+    message = await generate(g_players, g_penalty, g_full, banned_rank)
+    return message
   for i in range(len(g_players)):
     message[i] = ('{}: {} {}; rank {} ({}); penalty {} points'.format(g_players[i], factions[i], mats[i], rank[i], rank_index[i], penalty_offset[i]))
   return message
@@ -80,58 +85,65 @@ async def det_ranklist(mat):
 @bot.command (name='join', help='Join the player list for the next game round. As is to add own name or pass (multiple) arguments for each player name.')
 async def join(ctx, *args):
   global joinlist
+  if (ctx.guild.id not in joinlist):
+      joinlist[ctx.guild.id] = []
   if not args:
-    joinlist.append(ctx.author.name)
-  elif (args[0] == '$channel'):
-    voice_channel = discord.utils.get(ctx.message.server.channels, name="General", type=discord.ChannelType.voice)
-    members = voice_channel.voice_members
-    joinlist.append(members)
+    joinlist[ctx.guild.id].append(ctx.author.name)
+  elif (args[0] == '$c'):
+    voice_channel = discord.utils.get(ctx.guild.voice_channels, name="General")
+    members = [user.name for user in voice_channel.members]
+    joinlist[ctx.guild.id].extend(members)
   else:
     for name in args:
-     joinlist.append(name)
-  await ctx.send(joinlist)
+     joinlist[ctx.guild.id].append(name)
+  await ctx.send(joinlist[ctx.guild.id])
+  return
 
 @bot.command (name='list', help = 'Show current list of players joined.')
 async def list(ctx):
   await ctx.send(joinlist)
+  return
 
 @bot.command (name='start', help='Start generating based on the list of joined players from the join command')
 async def start(ctx):
   global joinlist
+  if (ctx.guild.id) not in joinlist:
+    await ctx.send('No names provided; use join first.')
+    return
   response = await generate(joinlist, 7, 0, 8)
-  joinlist = []
+  joinlist[ctx.guild.id] = []
   for set in response:
     await ctx.send(response[set])
   return
 
 @bot.command (name='js', help='Joins+Start [list of names]. Generate random faction/mat combo\'s based on base game only.')
 async def js(ctx, *args):
+  userlist = []
   if not args:
-    response = await generate(range(5), 7, 0, 8)
-    await ctx.send('No arguments passed, assuming 5 players.')
+    userlist = [user.name for user in discord.utils.get(ctx.guild.voice_channels, name="General").members]
+    response = await generate(userlist, 7, 0, 8)
     for set in response:
       await ctx.send(response[set])
   else:
-    joinlist = []
     for arg in args:
-      joinlist.append(arg)
-    response = await generate(joinlist, 7, 0, 8)
+      userlist.append(arg)
+    response = await generate(userlist, 7, 0, 8)
     for set in response:
       await ctx.send(response[set])
   return
 
 @bot.command (name='jsf', help='Join+Start+Full [list of names]. Generate random faction/mat combo\'s based on base game and expansion')
 async def jsf(ctx, *args):
+  userlist = []
   if not args:
-    response = await generate(range(5), 7, 1, 8)
-    await ctx.send('No arguments passed, assuming 5 players.')
+    userlist = [user.name for user in discord.utils.get(ctx.guild.voice_channels, name="General").members]
+    response = await generate(userlist, 7, 1, 8)
     for set in response:
       await ctx.send(response[set])
   else:
-    joinlist = []
     for arg in args:
-      joinlist.append(arg)
-    response = await generate(joinlist, 7, 1, 8)
+      userlist.append(arg)
+    response = await generate(userlist, 7, 1, 8)
     for set in response:
       await ctx.send(response[set])
   return
