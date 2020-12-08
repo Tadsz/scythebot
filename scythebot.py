@@ -101,7 +101,7 @@ async def join(ctx, *args):
 
 @bot.command (name='list', help = 'Show current list of players joined.')
 async def list(ctx):
-  await ctx.send(joinlist)
+  await ctx.send(joinlist[ctx.guild.id])
   return
 
 @bot.command (name='start', help='Start generating based on the list of joined players from the join command')
