@@ -77,21 +77,25 @@ async def det_ranklist(mat):
   elif (mat == 'Innovative'):
     return rank_innovative
 
-@bot.command (name='join')
+@bot.command (name='join', help='Join the player list for the next game round. As is to add own name or pass (multiple) arguments for each player name.')
 async def join(ctx, *args):
   global joinlist
   if not args:
     joinlist.append(ctx.author.name)
+  elif (args[0] == '$channel'):
+    voice_channel = discord.utils.get(ctx.message.server.channels, name="General", type=discord.ChannelType.voice)
+    members = voice_channel.voice_members
+    joinlist.append(members)
   else:
     for name in args:
      joinlist.append(name)
   await ctx.send(joinlist)
 
-@bot.command (name='list')
+@bot.command (name='list', help = 'Show current list of players joined.')
 async def list(ctx):
   await ctx.send(joinlist)
 
-@bot.command (name='start')
+@bot.command (name='start', help='Start generating based on the list of joined players from the join command')
 async def start(ctx):
   global joinlist
   response = await generate(joinlist, 7, 0, 8)
@@ -100,7 +104,7 @@ async def start(ctx):
     await ctx.send(response[set])
   return
 
-@bot.command (name='js')
+@bot.command (name='js', help='Joins+Start [list of names]. Generate random faction/mat combo\'s based on base game only.')
 async def js(ctx, *args):
   if not args:
     response = await generate(range(5), 7, 0, 8)
@@ -116,7 +120,7 @@ async def js(ctx, *args):
       await ctx.send(response[set])
   return
 
-@bot.command (name='jsf')
+@bot.command (name='jsf', help='Join+Start+Full [list of names]. Generate random faction/mat combo\'s based on base game and expansion')
 async def jsf(ctx, *args):
   if not args:
     response = await generate(range(5), 7, 1, 8)
