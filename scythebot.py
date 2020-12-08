@@ -121,9 +121,12 @@ async def js(ctx, *args):
   userlist = []
   if not args:
     userlist = [user.name for user in discord.utils.get(ctx.guild.voice_channels, name="General").members]
-    response = await generate(userlist, 7, 0, 8)
-    for set in response:
-      await ctx.send(response[set])
+    if (len(userlist) >= 1):
+      response = await generate(userlist, 7, 0, 8)
+      for set in response:
+        await ctx.send(response[set])
+    else:
+      await ctx.send('No players found in voice chat General')
   else:
     for arg in args:
       userlist.append(arg)
@@ -137,9 +140,12 @@ async def jsf(ctx, *args):
   userlist = []
   if not args:
     userlist = [user.name for user in discord.utils.get(ctx.guild.voice_channels, name="General").members]
-    response = await generate(userlist, 7, 1, 8)
-    for set in response:
-      await ctx.send(response[set])
+    if (len(userlist) >= 1):
+      response = await generate(userlist, 7, 1, 8)
+      for set in response:
+        await ctx.send(response[set])
+    else:
+      await ctx.send('No players found in voice chat General')
   else:
     for arg in args:
       userlist.append(arg)
