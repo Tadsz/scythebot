@@ -13,9 +13,7 @@ bot = commands.Bot(command_prefix='!')
 @bot.event
 async def on_ready():
   print('Logged in as ScytheBot')
-  print('ScytheBot alpha002')
-  #print(client.user.name)
-  #print(client.user.id)
+  print('ScytheBot alpha003')
   print('----------')
 
 fact_ori = ['Rusviet', 'Crimean', 'Polania', 'Nordic', 'Saxony']
@@ -33,6 +31,35 @@ rank_agricultural = [5,4,4,3,2,2,3]
 rank_militant = [7,7,5,3,4,4,3]
 rank_innovative = [7,7,6,5,6,4,4]
 joinlist = []
+
+async def generate(g_players, g_penalty: int, g_full: int, banned_rank: int):
+  if (g_full == 1):
+    factions = fact_full
+  else:
+    factions = fact_ori
+  if (g_full == 1):
+    mats = mats_full
+  else:
+    mats = mats_ori
+  random.shuffle(g_players)
+  random.shuffle(factions)
+  random.shuffle(mats)
+  rank_index = []
+  rank = []
+  penalty_list = []
+  message = {}
+  for i in range(len(g_players)):
+    rank_list =  await det_ranklist(mats[i])
+    rank_index.append(rank_list[fact_full.index(factions[i])])
+    rank.append(rank_names[rank_index[i]-1])
+    penalty_list.append(g_penalty * rank_index[i])
+  penalty_offset = [pen - min(penalty_list) for pen in penalty_list]
+  if (max(rank_index) >= banned_rank):
+    generate(g_players, g_penalty, g_full, banned_rank)
+    return
+  for i in range(len(g_players)):
+    message[i] = ('{}: {} {}; rank {} ({}); penalty {} points'.format(g_players[i], factions[i], mats[i], rank[i], rank_index[i], penalty_offset[i]))
+  return message
 
 async def det_ranklist(mat):
   if (mat == 'Industrial'):
@@ -71,13 +98,15 @@ async def start(ctx):
   joinlist = []
   for set in response:
     await ctx.send(response[set])
-  #await ctx.send(response)
   return
 
 @bot.command (name='js')
 async def js(ctx, *args):
   if not args:
-    await ctx.send('No arguments passed, try again with names')
+    response = await generate(range(5), 7, 0, 8)
+    await ctx.send('No arguments passed, assuming 5 players.')
+    for set in response:
+      await ctx.send(response[set])
   else:
     joinlist = []
     for arg in args:
@@ -87,50 +116,23 @@ async def js(ctx, *args):
       await ctx.send(response[set])
   return
 
-async def generate(g_players, g_penalty: int, g_full: int, banned_rank: int):
-  if (g_full == 1):
-    factions = fact_full
+@bot.command (name='jsf')
+async def jsf(ctx, *args):
+  if not args:
+    response = await generate(range(5), 7, 1, 8)
+    await ctx.send('No arguments passed, assuming 5 players.')
+    for set in response:
+      await ctx.send(response[set])
   else:
-    factions = fact_ori
-  if (g_full == 1):
-    mats = mats_full
-  else:
-    mats = mats_ori
-  random.shuffle(g_players)
-  random.shuffle(factions)
-  random.shuffle(mats)
-  rank_index = []
-  rank = []
-  penalty_list = []
-  message = {}
-  for i in range(len(g_players)):
-    rank_list =  await det_ranklist(mats[i])
-    rank_index.append(rank_list[fact_full.index(factions[i])])
-    rank.append(rank_names[rank_index[i]-1])
-    penalty_list.append(g_penalty * rank_index[i])
-  penalty_offset = [pen - min(penalty_list) for pen in penalty_list]
-  if (max(rank_index) >= banned_rank):
-    generate(g_players, g_penalty, g_full, banned_rank)
-    return
-  for i in range(len(g_players)):
-    message[i] = ('{}: {} {}; rank {} ({}); penalty {} points'.format(g_players[i], factions[i], mats[i], rank[i], rank_index[i], penalty_offset[i]))
-  return message
+    joinlist = []
+    for arg in args:
+      joinlist.append(arg)
+    response = await generate(joinlist, 7, 1, 8)
+    for set in response:
+      await ctx.send(response[set])
+  return
 
-@bot.command(name='99')
-async def nine_nine(ctx):
-    brooklyn_99_quotes = [
-        'I\'m the human form of the 💯 emoji.',
-        'Bingpot!',
-        (
-            'Cool. Cool cool cool cool cool cool cool, '
-            'no doubt no doubt no doubt no doubt.'
-        ),
-    ]
-
-    response = random.choice(brooklyn_99_quotes)
-    await ctx.send(response)
-
-@bot.command(name='roll_dice', help='Simulates rolling dice.')
+@bot.command(name='roll_dice', help='Simulates rolling dice. Example: "roll_dice 3 6" will roll 3 dice of 6 sides.')
 async def roll(ctx, number_of_dice: int, number_of_sides: int):
     dice = [
         str(random.choice(range(1, number_of_sides + 1)))
@@ -138,6 +140,4 @@ async def roll(ctx, number_of_dice: int, number_of_sides: int):
     ]
     await ctx.send(', '.join(dice))
 
-
 bot.run(TOKEN)
-
