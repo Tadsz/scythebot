@@ -123,18 +123,17 @@ async def js(ctx, *args):
     userlist = [user.name for user in discord.utils.get(ctx.guild.voice_channels, name="General").members]
     if (len(userlist) >= 1):
       response = await generate(userlist, 7, 0, 8)
-      for set in response:
-        await ctx.send(response[set])
     else:
       await ctx.send('No players found in voice chat General')
+      return
   else:
     for arg in args:
       userlist.append(arg)
     response = await generate(userlist, 7, 0, 8)
-    message = ''
-    for set in response:
-      message += '\n' + response[set]
-    await ctx.send(message.strip('\n'))
+  message = ''
+  for set in response:
+    message += '\n' + response[set]
+  await ctx.send(message.strip('\n'))
   return
 
 @bot.command (name='jsf', help='Join+Start+Full [list of names]. Generate random faction/mat combo\'s based on base game and expansion')
@@ -144,20 +143,17 @@ async def jsf(ctx, *args):
     userlist = [user.name for user in discord.utils.get(ctx.guild.voice_channels, name="General").members]
     if (len(userlist) >= 1):
       response = await generate(userlist, 7, 1, 8)
-      for set in response:
-        await ctx.send(response[set])
     else:
       await ctx.send('No players found in voice chat General')
+      return
   else:
     for arg in args:
       userlist.append(arg)
     response = await generate(userlist, 7, 1, 8)
-#    await ctx.send(list(response.values()))
-    message = ''
-    for set in response:
-      message += '\n' + response[set]
-    await ctx.send(message.strip('\n'))
-#      await ctx.send(response[set])
+  message = ''
+  for set in response:
+    message += '\n' + response[set]
+  await ctx.send(message.strip('\n'))
   return
 
 @bot.command(name='roll_dice', help='Simulates rolling dice. Example: "roll_dice 3 6" will roll 3 dice of 6 sides.')
