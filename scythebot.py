@@ -110,7 +110,7 @@ async def start(ctx):
   if (ctx.guild.id) not in joinlist:
     await ctx.send('No names provided; use join first.')
     return
-  response = await generate(joinlist, 7, 0, 8)
+  response = await generate(joinlist[ctx.guild.id], 7, 0, 8)
   joinlist[ctx.guild.id] = []
   for set in response:
     await ctx.send(response[set])
