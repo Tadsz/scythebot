@@ -33,6 +33,7 @@ rank_mechanical = [6,6,4,3,4,1,1]
 rank_agricultural = [5,4,4,3,2,2,3]
 rank_militant = [7,7,5,3,4,4,3]
 rank_innovative = [7,7,6,5,6,4,4]
+vpenalty = {}
 joinlist = {}
 
 async def generate(g_players, g_penalty: int, g_full: int, banned_rank: int):
@@ -41,6 +42,11 @@ async def generate(g_players, g_penalty: int, g_full: int, banned_rank: int):
     mats = mats_full
     if (len(g_players) > 7):
         g_players = g_players[0:7]
+  elif (g_full == 2):
+    factions = fact_add
+    mats = mats_add
+    if (len(g_players) > 2):
+        g_players = g_players[0:2]
   else:
     factions = fact_ori
     mats = mats_ori
@@ -59,9 +65,9 @@ async def generate(g_players, g_penalty: int, g_full: int, banned_rank: int):
     rank.append(rank_names[rank_index[i]-1])
     penalty_list.append(g_penalty * rank_index[i])
   penalty_offset = [pen - min(penalty_list) for pen in penalty_list]
-  if (max(rank_index) >= banned_rank):
-    message = await generate(g_players, g_penalty, g_full, banned_rank)
-    return message
+#  if (max(rank_index) >= banned_rank):
+#    message = await generate(g_players, g_penalty, g_full, banned_rank)
+#    return message
   for i in range(len(g_players)):
     message[i] = ('{}: {} {}; rank {} ({}); penalty {} points'.format(g_players[i], factions[i], mats[i], rank[i], rank_index[i], penalty_offset[i]))
   return message
@@ -107,10 +113,14 @@ async def list(ctx):
 @bot.command (name='start', help='Start generating based on the list of joined players from the join command')
 async def start(ctx):
   global joinlist
+  if (ctx.guild.id in vpenalty):
+    g_penalty = vpenalty[ctx.guild.id]
+  else:
+    g_penalty = 7
   if (ctx.guild.id) not in joinlist:
     await ctx.send('No names provided; use join first.')
     return
-  response = await generate(joinlist[ctx.guild.id], 7, 0, 8)
+  response = await generate(joinlist[ctx.guild.id], g_penalty, 0, 8)
   joinlist[ctx.guild.id] = []
   for set in response:
     await ctx.send(response[set])
@@ -119,17 +129,21 @@ async def start(ctx):
 @bot.command (name='js', help='Joins+Start [list of names]. Generate random faction/mat combo\'s based on base game only.')
 async def js(ctx, *args):
   userlist = []
+  if (ctx.guild.id in vpenalty):
+    g_penalty = vpenalty[ctx.guild.id]
+  else:
+    g_penalty = 7
   if not args:
     userlist = [user.name for user in discord.utils.get(ctx.guild.voice_channels, name="General").members]
     if (len(userlist) >= 1):
-      response = await generate(userlist, 7, 0, 8)
+      response = await generate(userlist, g_penalty, 0, 8)
     else:
       await ctx.send('No players found in voice chat General')
       return
   else:
     for arg in args:
       userlist.append(arg)
-    response = await generate(userlist, 7, 0, 8)
+    response = await generate(userlist, g_penalty, 0, 8)
   message = ''
   for set in response:
     message += '\n' + response[set]
@@ -139,22 +153,55 @@ async def js(ctx, *args):
 @bot.command (name='jsf', help='Join+Start+Full [list of names]. Generate random faction/mat combo\'s based on base game and expansion')
 async def jsf(ctx, *args):
   userlist = []
+  if (ctx.guild.id in vpenalty):
+    g_penalty = vpenalty[ctx.guild.id]
+  else:
+    g_penalty = 7
   if not args:
     userlist = [user.name for user in discord.utils.get(ctx.guild.voice_channels, name="General").members]
     if (len(userlist) >= 1):
-      response = await generate(userlist, 7, 1, 8)
+      response = await generate(userlist, g_penalty, 1, 8)
     else:
       await ctx.send('No players found in voice chat General')
       return
   else:
     for arg in args:
       userlist.append(arg)
-    response = await generate(userlist, 7, 1, 8)
+    response = await generate(userlist, g_penalty, 1, 8)
   message = ''
   for set in response:
     message += '\n' + response[set]
   await ctx.send(message.strip('\n'))
   return
+
+@bot.command (name='jsa', help='Join+Start+Add-on Only [list of names]. Generate random faction/mat combo\'s based on base game and expansion')
+async def jsa(ctx, *args):
+  userlist = []
+  if (ctx.guild.id in vpenalty):
+    g_penalty = vpenalty[ctx.guild.id]
+  else:
+    g_penalty = 7
+  if not args:
+    userlist = [user.name for user in discord.utils.get(ctx.guild.voice_channels, name="General").members]
+    if (len(userlist) >= 1):
+      response = await generate(userlist, g_penalty, 2, 8)
+    else:
+      await ctx.send('No players found in voice chat General')
+      return
+  else:
+    for arg in args:
+      userlist.append(arg)
+    response = await generate(userlist, g_penalty, 2, 8)
+    message = ''
+    for set in response:
+      message += '\n' + response[set]
+    await ctx.send(message.strip('\n'))
+  return
+
+@bot.command (name='', help='Set the penalty multiplier.')
+async def setpenalty(ctx, set_penalty: int):
+  vpenalty[ctx.guild.id] = set_penalty
+  await ctx.send('Penalty multiplier set to {}'.format(set_penalty))
 
 @bot.command(name='roll_dice', help='Simulates rolling dice. Example: "roll_dice 3 6" will roll 3 dice of 6 sides.')
 async def roll(ctx, number_of_dice: int, number_of_sides: int):
