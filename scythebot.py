@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+sourcelink = 'https://github.com/tariqdam/scythebot/'
+botversion = 'alpha006'
 
 intents = discord.Intents.default()
 intents.members = True
@@ -16,7 +18,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 @bot.event
 async def on_ready():
   print('Logged in as ScytheBot')
-  print('ScytheBot alpha005')
+  print('ScytheBot {}'.format(botversion))
   print('----------')
 
 # Initialize factions, mats, and rank lists ordered according to factions list
@@ -41,8 +43,8 @@ vfact, vmat, vpen, vban, vfull, vjoin = {}, {}, {}, {}, {}, {}
 
 async def generate(g_players, g_penalty: int, banned_rank: int, g_full: int):
   if (g_full == 1):
-    factions = dfact_full
-    mats = dmats_full
+    factions = dfact_full.copy()
+    mats = dmats_full.copy()
   elif (g_full == 2):
     factions = dfact['add-on']
     mats = dmats['add-on']
@@ -61,9 +63,9 @@ async def generate(g_players, g_penalty: int, banned_rank: int, g_full: int):
     rank.append(rank_names[rank_index[i]-1])
     penalty_list.append(g_penalty * rank_index[i])
   penalty_offset = [pen - min(penalty_list) for pen in penalty_list]
-#  if (max(rank_index) >= banned_rank):
-#    message = await generate(g_players, g_penalty, g_full, banned_rank)
-#    return message
+  if (max(rank_index) >= banned_rank):
+    message = await generate(g_players, g_penalty, banned_rank, g_full)
+    return message
   for i in range(len(g_players)):
     message[i] = ('{}: {} {}; rank {} ({}); penalty {} points'.format(g_players[i], factions[i], mats[i], rank[i], rank_index[i], penalty_offset[i]))
   return message
@@ -123,9 +125,6 @@ async def js(ctx, *args):
       l_pen = int(args[0][1])
       l_ban = int(args[0][2])
       l_full = int(args[0][3])
-      await ctx.send(l_pen)
-      await ctx.send(l_ban)
-      await ctx.send(l_full)
       argstart = 1
     for arg in args[argstart:]:
       userlist.append(arg)
@@ -205,6 +204,19 @@ async def roll(ctx, number_of_dice: int, number_of_sides: int):
         for _ in range(number_of_dice)
     ]
     await ctx.send(', '.join(dice))
+
+@bot.command(name='v', help='Get current version')
+async def version(ctx):
+  await ctx.send('Current version {}. Source code available at {}'.format(botversion, sourcelink))
+  return
+
+@bot.command(name='showdata', help='Show used data')
+async def showdata(ctx):
+  l_pen = vpen[ctx.guild.id] if ctx.guild.id in vpen else dpen
+  l_ban = vban[ctx.guild.id] if ctx.guild.id in vban else dban
+  l_full = vfull[ctx.guild.id] if ctx.guild.id in vfull else dfull
+  message = {'Factions':dfact_full, 'Mats':dmats_full, 'Ranks (ordered)':drank, 'Penalty':l_pen, 'Banned level': l_ban, 'Full':l_full}
+  await ctx.send(message)
 
 @bot.command(name='reset', help='Resets servers specific saved parameters')
 async def reset(ctx):
