@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 sourcelink = 'https://github.com/tariqdam/scythebot/'
-botversion = 'alpha006'
+botversion = 'alpha007'
 
 intents = discord.Intents.default()
 intents.members = True
