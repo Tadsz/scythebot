@@ -1,7 +1,7 @@
 a007 - 2020/12/16 - ADDED CHANNEL OPTIONS
-- Changed base lists to tuples
 - Added options to indicate which channel to use
 - Added levenshtein distance to determine channels with minor spelling mistakes
+- Minor bugfixes due to new features
 
 a006 - 2020/12/14 - RANDOM ERRORS
 - Fixed issue where shuffling resulted in shuffled base list

@@ -23,18 +23,18 @@ async def on_ready():
   print('----------')
 
 # Initialize factions, mats, and rank lists ordered according to factions list
-dfact = {'original': ('Rusviet', 'Crimean', 'Polania', 'Nordic', 'Saxony'), 'add-on': ('Albion', 'Togawa')}
-dfact_full = sum(dfact.values(), ())
-dmats = {'original': ('Industrial', 'Engineering', 'Patriotic', 'Mechanical', 'Agricultural'), 'add-on': ('Militant', 'Innovative')}
-dmats_full = sum(dmats.values(), ())
-rank_names = ('F', 'D', 'C', 'B', 'A', 'S', 'SS', 'BANNED')
-drank = {'Industrial'  : (8,6,5,5,5,1,2),\
-	 'Engineering' : (6,5,3,4,2,2,2),\
-	 'Patriotic'   : (5,8,4,4,4,3,3),\
-	 'Mechanical'  : (6,6,4,3,4,1,1),\
-	 'Agricultural': (5,4,4,3,2,2,3),\
-	 'Militant'    : (7,7,5,3,4,4,3),\
-	 'Innovative'  : (7,7,6,5,6,4,4)}
+dfact = {'original': ['Rusviet', 'Crimean', 'Polania', 'Nordic', 'Saxony'], 'add-on': ['Albion', 'Togawa']}
+dfact_full = sum(dfact.values(), [])
+dmats = {'original': ['Industrial', 'Engineering', 'Patriotic', 'Mechanical', 'Agricultural'], 'add-on': ['Militant', 'Innovative']}
+dmats_full = sum(dmats.values(), [])
+rank_names = ['F', 'D', 'C', 'B', 'A', 'S', 'SS', 'BANNED']
+drank = {'Industrial'  : [8,6,5,5,5,1,2],\
+	 'Engineering' : [6,5,3,4,2,2,2],\
+	 'Patriotic'   : [5,8,4,4,4,3,3],\
+	 'Mechanical'  : [6,6,4,3,4,1,1],\
+	 'Agricultural': [5,4,4,3,2,2,3],\
+	 'Militant'    : [7,7,5,3,4,4,3],\
+	 'Innovative'  : [7,7,6,5,6,4,4]}
 
 #default penalty and ban levels
 dpen = 7
@@ -138,7 +138,7 @@ async def js(ctx, *args):
   l_pen = vpen[ctx.guild.id] if ctx.guild.id in vpen else dpen
   l_ban = vban[ctx.guild.id] if ctx.guild.id in vban else dban
   l_full = vfull[ctx.guild.id] if ctx.guild.id in vfull else dfull
-  if not args:
+  if (not args) or (args[0] == '$c' and len(args) == 1):
     if ctx.author.voice and ctx.author.voice.channel:
       userlist = [user.name for user in ctx.author.voice.channel.members]
       if (len(userlist) >= 1):
@@ -146,7 +146,7 @@ async def js(ctx, *args):
       else:
         await ctx.send('No players found in voice chat')
         return
-  if (args[0] == '$c') and (len(args) > 1):
+  elif (args[0] == '$c') and (len(args) > 1):
     voice_channel = discord.utils.get(ctx.guild.voice_channels, name=args[1])
     if voice_channel:
       userlist = [user.name for user in voice_channel.members]
