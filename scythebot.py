@@ -160,7 +160,6 @@ async def js(ctx, *args):
       levdistlist = []
       for x in voice_list:
         levdistlist.append(await levdist(args[1], x))
-      await ctx.send(voice_list)
       if min(levdistlist) < 4:
         voice_channel = discord.utils.get(ctx.guild.voice_channels, name=voice_list[levdistlist.index(min(levdistlist))])
         userlist = [user.name for user in voice_channel.members]
