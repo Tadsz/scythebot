@@ -1,3 +1,11 @@
+a007 - 2020/12/16 - ADDED CHANNEL OPTIONS
+- Changed base lists to tuples
+- Added options to indicate which channel to use
+- Added levenshtein distance to determine channels with minor spelling mistakes
+
+a006 - 2020/12/14 - RANDOM ERRORS
+- Fixed issue where shuffling resulted in shuffled base list
+
 a005 - 2020/12/12 - ADDED SERVER SPECIFIC SETTINGS
 - Known issues: reroll upon banned combination
 

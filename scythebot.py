@@ -2,6 +2,7 @@
 import os
 import random
 import discord
+import numpy as np
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -22,18 +23,18 @@ async def on_ready():
   print('----------')
 
 # Initialize factions, mats, and rank lists ordered according to factions list
-dfact = {'original': ['Rusviet', 'Crimean', 'Polania', 'Nordic', 'Saxony'], 'add-on': ['Albion', 'Togawa']}
-dfact_full = sum(dfact.values(), [])
-dmats = {'original': ['Industrial', 'Engineering', 'Patriotic', 'Mechanical', 'Agricultural'], 'add-on': ['Militant', 'Innovative']}
-dmats_full = sum(dmats.values(), [])
-rank_names = ['F', 'D', 'C', 'B', 'A', 'S', 'SS', 'BANNED']
-drank = {'Industrial'  : [8,6,5,5,5,1,2],\
-	 'Engineering' : [6,5,3,4,2,2,2],\
-	 'Patriotic'   : [5,8,4,4,4,3,3],\
-	 'Mechanical'  : [6,6,4,3,4,1,1],\
-	 'Agricultural': [5,4,4,3,2,2,3],\
-	 'Militant'    : [7,7,5,3,4,4,3],\
-	 'Innovative'  : [7,7,6,5,6,4,4]}
+dfact = {'original': ('Rusviet', 'Crimean', 'Polania', 'Nordic', 'Saxony'), 'add-on': ('Albion', 'Togawa')}
+dfact_full = sum(dfact.values(), ())
+dmats = {'original': ('Industrial', 'Engineering', 'Patriotic', 'Mechanical', 'Agricultural'), 'add-on': ('Militant', 'Innovative')}
+dmats_full = sum(dmats.values(), ())
+rank_names = ('F', 'D', 'C', 'B', 'A', 'S', 'SS', 'BANNED')
+drank = {'Industrial'  : (8,6,5,5,5,1,2),\
+	 'Engineering' : (6,5,3,4,2,2,2),\
+	 'Patriotic'   : (5,8,4,4,4,3,3),\
+	 'Mechanical'  : (6,6,4,3,4,1,1),\
+	 'Agricultural': (5,4,4,3,2,2,3),\
+	 'Militant'    : (7,7,5,3,4,4,3),\
+	 'Innovative'  : (7,7,6,5,6,4,4)}
 
 #default penalty and ban levels
 dpen = 7
@@ -70,6 +71,22 @@ async def generate(g_players, g_penalty: int, banned_rank: int, g_full: int):
     message[i] = ('{}: {} {}; rank {} ({}); penalty {} points'.format(g_players[i], factions[i], mats[i], rank[i], rank_index[i], penalty_offset[i]))
   return message
 
+async def levdist(seq1, seq2):
+    size_x = len(seq1) + 1
+    size_y = len(seq2) + 1
+    matrix = np.zeros((size_x, size_y))
+    for x in range(size_x):
+        matrix [x, 0] = x
+    for y in range(size_y):
+        matrix [0, y] = y
+    for x in range(1, size_x):
+        for y in range(1, size_y):
+            if seq1[x-1] == seq2[y-1]:
+                matrix[x,y] = min(matrix[x-1, y] + 1, matrix[x-1, y-1], matrix[x, y-1] + 1)
+            else:
+                matrix[x,y] = min(matrix[x-1,y] + 1, matrix[x-1,y-1] + 1, matrix[x,y-1] + 1)
+    return (matrix[size_x - 1, size_y - 1])
+
 @bot.command (name='join', help='Join the player list for the next game round. As is to add own name or pass (multiple) arguments for each player name.')
 async def join(ctx, *args):
   global vjoin
@@ -78,9 +95,18 @@ async def join(ctx, *args):
   if not args:
     vjoin[ctx.guild.id].append(ctx.author.name)
   elif (args[0] == '$c'):
-    voice_channel = discord.utils.get(ctx.guild.voice_channels, name="General")
-    members = [user.name for user in voice_channel.members]
-    vjoin[ctx.guild.id].extend(members)
+    #voice_channel = discord.utils.get(ctx.guild.voice_channels, name="General")
+    if ctx.author.voice and ctx.author.voice.channel:
+      voice_channel = ctx.author.voice.channel
+      members = [user.name for user in voice_channel.members]
+      vjoin[ctx.guild.id].extend(members)
+    elif len(args) > 1:
+      voice_channel = discord.utils.get(ctx.guild.voice_channels, name=args[1])
+      members = [user.name for user in voice_channel.members]
+      if len(members) >= 1:
+        vjoin[ctx.guild.id].extend(members)
+    else:
+      await ctx.send('Join a voice channel to indicate which channel to use')
   else:
     for name in args:
      vjoin[ctx.guild.id].append(name)
@@ -113,12 +139,39 @@ async def js(ctx, *args):
   l_ban = vban[ctx.guild.id] if ctx.guild.id in vban else dban
   l_full = vfull[ctx.guild.id] if ctx.guild.id in vfull else dfull
   if not args:
-    userlist = [user.name for user in discord.utils.get(ctx.guild.voice_channels, name="General").members]
-    if (len(userlist) >= 1):
-      response = await generate(userlist, l_pen, l_ban, l_full)
+    if ctx.author.voice and ctx.author.voice.channel:
+      userlist = [user.name for user in ctx.author.voice.channel.members]
+      if (len(userlist) >= 1):
+        response = await generate(userlist, l_pen, l_ban, l_full)
+      else:
+        await ctx.send('No players found in voice chat')
+        return
+  if (args[0] == '$c') and (len(args) > 1):
+    voice_channel = discord.utils.get(ctx.guild.voice_channels, name=args[1])
+    if voice_channel:
+      userlist = [user.name for user in voice_channel.members]
+      if len(userlist) >= 1:
+        response = await generate(userlist, l_pen, l_ban, l_full)
+      elif len(userlist) == 0:
+        await ctx.send('No players found in voice chat')
+        return
     else:
-      await ctx.send('No players found in voice chat General')
-      return
+      voice_list = [x.name for x in ctx.guild.voice_channels]
+      levdistlist = []
+      for x in voice_list:
+        levdistlist.append(await levdist(args[1], x))
+      await ctx.send(voice_list)
+      if min(levdistlist) < 4:
+        voice_channel = discord.utils.get(ctx.guild.voice_channels, name=voice_list[levdistlist.index(min(levdistlist))])
+        userlist = [user.name for user in voice_channel.members]
+        if len(userlist) >= 1:
+          response = await generate(userlist, l_pen, l_ban, l_full)
+        elif len(userlist) == 0:
+          await ctx.send('No players found in voice chat')
+          return
+      else:
+        await ctx.send('Voice channel not found')
+        return
   else:
     argstart = 0
     if args[0][0] == '$':
