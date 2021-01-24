@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-sourcelink = 'https://github.com/tariqdam/scythebot/'
+sourcelink = 'https://github.com/tadsz/scythebot/'
 botversion = 'alpha007'
 
 intents = discord.Intents.default()
@@ -276,6 +276,11 @@ async def reset(ctx):
   del vban[ctx.guild.id]
   del vfull[ctx.guild.id]
   del vjoin[ctx.guild.id]
+  return
+
+@bot.command(name='spm', help='Test to send PM')
+async def spm(ctx):
+  await ctx.author.send('You send me a request for a PM')
   return
 
 bot.run(TOKEN)
