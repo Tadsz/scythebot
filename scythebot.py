@@ -9,6 +9,8 @@ import socket
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+VALHEIM_HOST = os.getenv('VALHEIM_HOST')
+VALHEIM_PORT = os.getenv('VALHEIM_PORT')
 sourcelink = 'https://github.com/tadsz/scythebot/'
 botversion = 'alpha007'
 
@@ -284,13 +286,10 @@ async def spm(ctx):
   await ctx.author.send('You send me a request for a PM')
   return
 
-@bot.command(name='valheim', help='Retrieve IP address')
+@bot.command(name='valheim', help='Retrieve Valheim IP address/port from dynamic DNS')
 async def valheim(ctx):
-  server = socket.gethostbyname('tadsz.mooo.com')
-  port = '2456'
-  await ctx.send(f'{server}:{port}')
+  server = socket.gethostbyname(VALHEIM_HOST)
+  await ctx.send(f'{server}:{VALHEIM_PORT}')
   return
-
-
 
 bot.run(TOKEN)
