@@ -288,7 +288,7 @@ async def spm(ctx):
 async def valheim(ctx):
   server = socket.gethostbyname('tadsz.mooo.com')
   port = '2456'
-  await ctx.author.send(f'{server}:{port}')
+  await ctx.send(f'{server}:{port}')
   return
 
 
