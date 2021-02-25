@@ -5,6 +5,7 @@ import discord
 import numpy as np
 from discord.ext import commands
 from dotenv import load_dotenv
+import socket
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -282,5 +283,14 @@ async def reset(ctx):
 async def spm(ctx):
   await ctx.author.send('You send me a request for a PM')
   return
+
+@bot.command(name='valheim', help='Retrieve IP address')
+async def valheim(ctx):
+  server = socket.gethostbyname('tadsz.mooo.com')
+  port = '2456'
+  await ctx.author.send(f'{server}:{port}')
+  return
+
+
 
 bot.run(TOKEN)
