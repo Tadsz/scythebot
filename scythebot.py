@@ -5,6 +5,7 @@ import discord
 import numpy as np
 from discord.ext import commands
 from dotenv import load_dotenv
+import asyncio
 import socket
 
 load_dotenv()
@@ -12,7 +13,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 VALHEIM_HOST = os.getenv('VALHEIM_HOST')
 VALHEIM_PORT = os.getenv('VALHEIM_PORT')
 sourcelink = 'https://github.com/tadsz/scythebot/'
-botversion = 'alpha007'
+botversion = 'alpha007a'
 
 intents = discord.Intents.default()
 intents.members = True
@@ -44,6 +45,19 @@ dpen = 7
 dban = 8
 dfull = 0
 vfact, vmat, vpen, vban, vfull, vjoin = {}, {}, {}, {}, {}, {}
+
+thanks_notation = ['thanks', 'Thanks', 'thanx', 'Thanx', 'Thx', 'thx', 'thanq', ',Thanq', 'dank', 'Dank' ]
+thanks_responses = ['You\'re welcome!', 'No problem!', 'Alsjeblieft', 'Graag gedaan', 'Your wish is my command',
+                    'Het is dat je het zo lief vroeg', 'Heel fijn om eens bedankt te worden :)', 'Nee, jij bedankt!',
+                    'Veel plezier!', 'Succes met gamen!', 'Zet \'m op!']
+thanks_responded = {}
+
+response_notation = ['lol', 'haha', 'damn', 'oh shit', 'wtf']
+response_responses = ['Het is gewoon heel normaal om bedankt te worden.', 'Ik vind het fijn om bedankt te worden.',
+                      'Wat had je dan verwacht?', 'Ik heb ook gevoelens ja',
+                      '01101100 01100001 01100001 01110100 00100000 01101101 01100101 00100000 01101101 01100101 '
+                      '01110100 00100000 01110010 01110101 01110011 01110100']
+
 
 async def generate(g_players, g_penalty: int, banned_rank: int, g_full: int):
   if (g_full == 1):
@@ -291,5 +305,32 @@ async def valheim(ctx):
   server = socket.gethostbyname(VALHEIM_HOST)
   await ctx.send(f'{server}:{VALHEIM_PORT}')
   return
+
+@bot.event
+async def on_message(message):
+    if len(message.content) > 25 or message.author.bot:
+        return
+    if any(x in message.content for x in thanks_notation):
+      ctx = await bot.get_context(message)
+      bot_active = 0
+      history = await ctx.message.channel.history(limit=3).flatten()
+      for message in history:
+        if message.author.bot:
+          bot_active = 1
+      if bot_active == 1:
+        resp = random.choice(range(0, len(thanks_responses)))
+        await ctx.send(thanks_responses[resp])
+        thanks_responded[ctx.guild.id] = 1
+        await asyncio.sleep(60)
+        thanks_responded[ctx.guild.id] = 0
+        return
+    if any(x in message.content for x in response_notation):
+      ctx = await bot.get_context(message)
+      thanks_activity = thanks_responded.get(ctx.guild.id)
+      if (thanks_activity is not None) and thanks_activity == 1:
+        resp = random.choice(range(0, len(response_responses)))
+        await ctx.send(response_responses[resp])
+        return
+    return
 
 bot.run(TOKEN)

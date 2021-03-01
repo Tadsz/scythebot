@@ -9,6 +9,10 @@ a006 - 2020/12/14 - RANDOM ERRORS
 a005 - 2020/12/12 - ADDED SERVER SPECIFIC SETTINGS
 - Known issues: reroll upon banned combination
 
+a005 - 2020/12/12 - Rewrite code to reduce repetitive code
+
+a004 - 09/12/2020 - Minor improvements
+
 a003 - 07/12/2020 - ADDED FULL FUNCTION
 - Extra player mats, removed unused functions
 
