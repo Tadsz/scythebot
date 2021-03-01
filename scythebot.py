@@ -26,6 +26,35 @@ async def on_ready():
   print('ScytheBot {}'.format(botversion))
   print('----------')
 
+@bot.event
+async def on_message(message):
+  if len(message.content) > 25 or message.author.bot:
+    return
+  if any(x in message.content for x in thanks_notation):
+    ctx = await bot.get_context(message)
+    bot_active = 0
+    history = await ctx.message.channel.history(limit=3).flatten()
+    for message in history:
+      if message.author.bot:
+        bot_active = 1
+    if bot_active == 1:
+      resp = random.choice(range(0, len(thanks_responses)))
+      await ctx.send(thanks_responses[resp])
+      thanks_responded[ctx.guild.id] = 1
+      await asyncio.sleep(60)
+      thanks_responded[ctx.guild.id] = 0
+      return
+  if any(x in message.content for x in response_notation):
+    ctx = await bot.get_context(message)
+    thanks_activity = thanks_responded.get(ctx.guild.id)
+    if (thanks_activity is not None) and thanks_activity == 1:
+      resp = random.choice(range(0, len(response_responses)))
+      await ctx.send(response_responses[resp])
+      return
+  await bot.process_commands(message)
+  return
+
+
 # Initialize factions, mats, and rank lists ordered according to factions list
 dfact = {'original': ['Rusviet', 'Crimean', 'Polania', 'Nordic', 'Saxony'], 'add-on': ['Albion', 'Togawa']}
 dfact_full = sum(dfact.values(), [])
@@ -305,32 +334,5 @@ async def valheim(ctx):
   server = socket.gethostbyname(VALHEIM_HOST)
   await ctx.send(f'{server}:{VALHEIM_PORT}')
   return
-
-@bot.event
-async def on_message(message):
-    if len(message.content) > 25 or message.author.bot:
-        return
-    if any(x in message.content for x in thanks_notation):
-      ctx = await bot.get_context(message)
-      bot_active = 0
-      history = await ctx.message.channel.history(limit=3).flatten()
-      for message in history:
-        if message.author.bot:
-          bot_active = 1
-      if bot_active == 1:
-        resp = random.choice(range(0, len(thanks_responses)))
-        await ctx.send(thanks_responses[resp])
-        thanks_responded[ctx.guild.id] = 1
-        await asyncio.sleep(60)
-        thanks_responded[ctx.guild.id] = 0
-        return
-    if any(x in message.content for x in response_notation):
-      ctx = await bot.get_context(message)
-      thanks_activity = thanks_responded.get(ctx.guild.id)
-      if (thanks_activity is not None) and thanks_activity == 1:
-        resp = random.choice(range(0, len(response_responses)))
-        await ctx.send(response_responses[resp])
-        return
-    return
 
 bot.run(TOKEN)
