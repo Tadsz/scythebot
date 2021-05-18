@@ -399,7 +399,7 @@ async def stop_proverb(ctx):
     return
 
 @bot.command(name='next.proverb')
-async def next_proverb(ctx, wait_time: int = 60):
+async def next_proverb(ctx, wait_time: int = 300):
     proverb, meaning = use_proverb()
     await ctx.send(proverb)
     await sleep(wait_time)
