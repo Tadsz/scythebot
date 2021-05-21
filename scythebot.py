@@ -376,11 +376,9 @@ async def proverb(ctx):
                     # send answer
                     proverb, meaning = use_proverb()
                     await ctx.send(proverb)
-                    # await sleep(5 * 60 * 60)
-                    await sleep(5 * 10)
+                    await sleep(5 * 60 * 60)
                     await ctx.send(meaning)
-                    # await sleep(19 * 60 * 60)
-                    await sleep(19 * 10)
+                    await sleep(19 * 60 * 60)
             else:
                 # same day but after time, postpone until next day:
                 await sleep((datetime(datetime.now().year, datetime.now().month, datetime.now().day + 1, 8, 0, 0) - datetime.now()).seconds)
