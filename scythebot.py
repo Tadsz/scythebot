@@ -19,6 +19,7 @@ sourcelink = 'https://github.com/tadsz/scythebot/'
 botversion = 'alpha008a'
 
 loop_proverb = {}
+loop_proverb_id = {}
 
 intents = discord.Intents.default()
 intents.members = True
@@ -69,12 +70,12 @@ dmats = {'original': ['Industrial', 'Engineering', 'Patriotic', 'Mechanical', 'A
          'add-on': ['Militant', 'Innovative']}
 dmats_full = sum(dmats.values(), [])
 rank_names = ['F', 'D', 'C', 'B', 'A', 'S', 'SS', 'BANNED']
-drank = {'Industrial': [8, 6, 5, 5, 5, 1, 2], \
-         'Engineering': [6, 5, 3, 4, 2, 2, 2], \
-         'Patriotic': [5, 8, 4, 4, 4, 3, 3], \
-         'Mechanical': [6, 6, 4, 3, 4, 1, 1], \
-         'Agricultural': [5, 4, 4, 3, 2, 2, 3], \
-         'Militant': [7, 7, 5, 3, 4, 4, 3], \
+drank = {'Industrial': [8, 6, 5, 5, 5, 1, 2],
+         'Engineering': [6, 5, 3, 4, 2, 2, 2],
+         'Patriotic': [5, 8, 4, 4, 4, 3, 3],
+         'Mechanical': [6, 6, 4, 3, 4, 1, 1],
+         'Agricultural': [5, 4, 4, 3, 2, 2, 3],
+         'Militant': [7, 7, 5, 3, 4, 4, 3],
          'Innovative': [7, 7, 6, 5, 6, 4, 4]}
 
 # default penalty and ban levels
@@ -368,31 +369,47 @@ async def valheim(ctx):
 
 @bot.command(name='proverb')
 async def proverb(ctx):
-    loop_proverb[ctx.guild.id] = True
-    while loop_proverb[ctx.guild.id] == True:
-        if datetime.now().time() > datetime.strptime('08:00:00', '%H:%M:%S').time():
-            if datetime.now().time() < datetime.strptime('09:30:00', '%H:%M:%S').time():
-                if loop_proverb[ctx.guild.id] == True:
-                    # send answer
-                    proverb, meaning = use_proverb()
-                    await ctx.send(proverb)
-                    await sleep(5 * 60 * 60)
-                    await ctx.send(meaning)
-                    await sleep(19 * 60 * 60)
+    if not loop_proverb.get(ctx.guild.id, False):
+        # if loop_proverb is false or non-existent, set to True
+        loop_proverb[ctx.guild.id] = True
+
+        # handle multiple instances by assigning individual ids
+        if loop_proverb_id.get(ctx.guild.id, None) == None:
+            loop_proverb_id[ctx.guild.id] = {}
+        loop_id = len(loop_proverb_id[ctx.guild.id])  # id is the length of the instances
+        loop_proverb_id[ctx.guild.id][loop_id] = True
+        await ctx.send(f'Starting proverb loop_id {loop_id}')
+
+        # actual loop
+        while loop_proverb[ctx.guild.id] and loop_proverb_id[ctx.guild.id][loop_id]:
+            if datetime.now().time() > datetime.strptime('08:00:00', '%H:%M:%S').time():
+                if datetime.now().time() < datetime.strptime('09:30:00', '%H:%M:%S').time():
+                    if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
+                        # send answer
+                        _proverb, _meaning = use_proverb()
+                        await ctx.send(_proverb)
+                        await sleep(5 * 60 * 60)
+
+                        if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
+                            await ctx.send(_meaning)
+                            await sleep(19 * 60 * 60)
+                else:
+                    # same day but after time, postpone until next day:
+                    await sleep((datetime(datetime.now().year, datetime.now().month, datetime.now().day + 1, 8, 0, 0) - datetime.now()).seconds)
             else:
-                # same day but after time, postpone until next day:
-                await sleep((datetime(datetime.now().year, datetime.now().month, datetime.now().day + 1, 8, 0, 0) - datetime.now()).seconds)
-        else:
-            # same day but too early:
-            await sleep(
-                (datetime(datetime.now().year, datetime.now().month, datetime.now().day, 8, 0,
-                          0) - datetime.now()).seconds)
+                # same day but too early:
+                await sleep(
+                    (datetime(datetime.now().year, datetime.now().month, datetime.now().day, 8, 0,
+                              0) - datetime.now()).seconds)
     return
 
 
 @bot.command(name='stop.proverb')
-async def stop_proverb(ctx):
-    loop_proverb[ctx.guild.id] = False
+async def stop_proverb(ctx, loop_id: int = 0):
+    if loop_proverb.get(ctx.guild.id, False):
+        loop_proverb[ctx.guild.id] = False
+        if loop_proverb_id[ctx.guild.id].get(loop_id):
+            loop_proverb_id[ctx.guild.id][loop_id] = False
     await ctx.send('Een gegeven paard moet je niet in de bek kijken')
     return
 
