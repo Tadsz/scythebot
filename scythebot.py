@@ -406,6 +406,7 @@ async def proverb(ctx):
 
 @bot.command(name='stop.proverb')
 async def stop_proverb(ctx, loop_id: int = None):
+    # stopping one loop, will stop all loops, can be rewritten to only check for the individual loop
     if loop_proverb.get(ctx.guild.id, False):
         loop_proverb[ctx.guild.id] = False
 
@@ -421,8 +422,10 @@ async def stop_proverb(ctx, loop_id: int = None):
                             loop_the_ids = False
         if loop_proverb_id[ctx.guild.id].get(loop_id):
             loop_proverb_id[ctx.guild.id][loop_id] = False
+            await ctx.send('Een gegeven paard moet je niet in de bek kijken')
+        else:
+            await ctx.send('Kon geen passende loop vinden om te stoppen')
 
-    await ctx.send('Een gegeven paard moet je niet in de bek kijken')
     return
 
 @bot.command(name='next.proverb')
