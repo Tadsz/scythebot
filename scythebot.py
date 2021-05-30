@@ -16,7 +16,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 VALHEIM_HOST = os.getenv('VALHEIM_HOST')
 VALHEIM_PORT = os.getenv('VALHEIM_PORT')
 sourcelink = 'https://github.com/tadsz/scythebot/'
-botversion = 'alpha008a'
+botversion = 'alpha009a'
 
 loop_proverb = {}
 loop_proverb_id = {}
@@ -405,11 +405,23 @@ async def proverb(ctx):
 
 
 @bot.command(name='stop.proverb')
-async def stop_proverb(ctx, loop_id: int = 0):
+async def stop_proverb(ctx, loop_id: int = None):
     if loop_proverb.get(ctx.guild.id, False):
         loop_proverb[ctx.guild.id] = False
+
+        # if no loop_id is given, get loop_ids and find the first True value
+        if loop_id is None:
+            loop_ids = loop_proverb_id.get(ctx.guild.id, None)
+            if loop_ids is not None:
+                loop_the_ids = True
+                while loop_the_ids:
+                    for key, value in loop_ids.items():
+                        if value:
+                            loop_id = key
+                            loop_the_ids = False
         if loop_proverb_id[ctx.guild.id].get(loop_id):
             loop_proverb_id[ctx.guild.id][loop_id] = False
+
     await ctx.send('Een gegeven paard moet je niet in de bek kijken')
     return
 
