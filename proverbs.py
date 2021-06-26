@@ -21,8 +21,8 @@ def get_proverb_history(num:int=7):
     return message
 
 def get_proverb_numericals():
-    data = pd.read_csv('savings.csv')
-    remaining = data['used'].isnull().count()
+    data = pd.read_csv('sayings.csv')
+    used = data['used'].notna().sum()
     total = len(data)
-    used = total = remaining
+    remaining = total - used
     return used, remaining, total

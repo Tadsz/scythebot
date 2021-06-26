@@ -445,7 +445,7 @@ async def proverb_history(ctx, num: int = 7):
 @bot.command(name='num.proverb')
 async def proverb_num(ctx):
     used, remaining, total = get_proverb_numericals()
-    message = f"Proverbs: {used}/{total} ({used/total*100})% used. {remaining} remaining."
+    message = f"Proverbs: {used}/{total} ({round(used/total*100, 1)})% used. {remaining} remaining."
     await ctx.send(message)
     return
 
