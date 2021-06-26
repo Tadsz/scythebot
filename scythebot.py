@@ -9,7 +9,7 @@ import asyncio
 from asyncio import sleep
 from datetime import datetime
 import socket
-from proverbs import use_proverb, get_proverb_history, get_proverb_numericals
+from proverbs import use_proverb, get_proverb_history, get_proverb_numericals, get_last_proverb
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -368,7 +368,7 @@ async def valheim(ctx):
 
 
 @bot.command(name='proverb')
-async def proverb(ctx):
+async def proverb(ctx, cont_prov: bool = False):
     if not loop_proverb.get(ctx.guild.id, False):
         # if loop_proverb is false or non-existent, set to True
         loop_proverb[ctx.guild.id] = True
@@ -383,18 +383,25 @@ async def proverb(ctx):
         # actual loop
         while loop_proverb[ctx.guild.id] and loop_proverb_id[ctx.guild.id][loop_id]:
             if datetime.now().time() > datetime.strptime('08:00:00', '%H:%M:%S').time():
-                if datetime.now().time() < datetime.strptime('09:30:00', '%H:%M:%S').time():
+                if datetime.now().time() < datetime.strptime('10:30:00', '%H:%M:%S').time():
                     if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
                         # send answer
-                        _proverb, _meaning = use_proverb()
+                        if not cont_prov:
+                            _proverb, _meaning = use_proverb()
+                        else:
+                            _proverb, _meaning = get_last_proverb()
+                            cont_prov = False
                         await ctx.send(_proverb)
-                        await sleep(5 * 60 * 60)
+                        sleep_time = (datetime(datetime.now().year, datetime.now().month, datetime.now().day, 13, 0, 0) - datetime.now()).seconds
+                        await sleep(sleep_time)
 
                         if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
                             await ctx.send(_meaning)
-                            await sleep(19 * 60 * 60)
+                            sleep_time = (datetime(datetime.now().year, datetime.now().month, datetime.now().day + 1, 8, 0, 0) - datetime.now()).seconds
+                            await sleep(sleep_time)
                 else:
                     # same day but after time, postpone until next day:
+                    # await ctx.send(f"Sleep time: {(datetime(datetime.now().year, datetime.now().month, datetime.now().day + 1, 8, 0, 0) - datetime.now()).seconds} seconds")
                     await sleep((datetime(datetime.now().year, datetime.now().month, datetime.now().day + 1, 8, 0, 0) - datetime.now()).seconds)
             else:
                 # same day but too early:
@@ -448,5 +455,11 @@ async def proverb_num(ctx):
     message = f"Proverbs: {used}/{total} ({round(used/total*100, 1)})% used. {remaining} remaining."
     await ctx.send(message)
     return
+
+@bot.command(name='cont.proverb')
+async def proverb_continue(ctx):
+    await proverb(ctx, cont_prov=True)
+    return
+
 
 bot.run(TOKEN)

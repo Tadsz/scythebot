@@ -26,3 +26,10 @@ def get_proverb_numericals():
     total = len(data)
     remaining = total - used
     return used, remaining, total
+
+def get_last_proverb():
+    data = pd.read_csv('sayings.csv')
+    selection = data.sort_values('used', ascending=False).head()
+    proverb = selection['proverb'].iloc[0]
+    meaning = selection['meaning'].iloc[0]
+    return proverb, meaning
