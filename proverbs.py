@@ -19,3 +19,10 @@ def get_proverb_history(num:int=7):
     for proverb, meaning in zip(selection['proverb'], selection['meaning']):
         message += f"{proverb} || {meaning} ||\n"
     return message
+
+def get_proverb_numericals():
+    data = pd.read_csv('savings.csv')
+    remaining = data['used'].isnull().count()
+    total = len(data)
+    used = total = remaining
+    return used, remaining, total
