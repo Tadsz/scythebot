@@ -9,7 +9,7 @@ import asyncio
 from asyncio import sleep
 from datetime import datetime
 import socket
-from proverbs import use_proverb
+from proverbs import use_proverb, get_proverb_history
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -434,6 +434,12 @@ async def next_proverb(ctx, wait_time: int = 300):
     await ctx.send(proverb)
     await sleep(wait_time)
     await ctx.send(meaning)
+    return
+
+@bot.command(name='history')
+async def proverb_history(ctx, num: int = 7):
+    message = get_proverb_history(num)
+    await ctx.send(message)
     return
 
 bot.run(TOKEN)
