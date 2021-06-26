@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 import pandas as pd
 
 
@@ -14,7 +14,11 @@ def use_proverb():
 
 def get_proverb_history(num:int=7):
     data = pd.read_csv('sayings.csv')
-    selection = data.loc[data['used'].notna()].sort_values('used', ascending=False)[['proverb', 'meaning']].head(num)
+    selection = data.loc[data['used'].notna()].sort_values('used', ascending=False)[['proverb', 'meaning']].head(num+1)
+    if time(8,0) <= datetime.now().time() <= time(13,0):
+        selection = selection[1:]
+    else:
+        selection = selection[:-1]
     message = ''
     for proverb, meaning in zip(selection['proverb'], selection['meaning']):
         message += f"{proverb} || {meaning} ||\n"
