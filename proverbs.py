@@ -17,5 +17,5 @@ def get_proverb_history(num:int=7):
     selection = data.loc[data['used'].notna()].sort_values('used', ascending=False)[['proverb', 'meaning']].head(num)
     message = ''
     for proverb, meaning in zip(selection['proverb'], selection['meaning']):
-        message += f"{proverb} || {meaning}\n"
+        message += f"{proverb} || {meaning} ||\n"
     return message
