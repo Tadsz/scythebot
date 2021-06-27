@@ -8,7 +8,7 @@ URL = 'https://www.woorden.org/inc/10spreekwoorden.php'
 
 proverbs = []
 meanings = []
-for i in range(500):
+for i in range(2000):
     page = requests.get(URL)
 
     soup = BeautifulSoup(page.content, 'html.parser')
@@ -41,5 +41,5 @@ data = data.drop_duplicates()
 
 data.to_csv('sayings.csv', index=False)
 
-data.shape
+print(data.shape)
 
