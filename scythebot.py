@@ -7,7 +7,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 import asyncio
 from asyncio import sleep
-from datetime import datetime
+from datetime import datetime, timedelta
 import socket
 from proverbs import use_proverb, get_proverb_history, get_proverb_numericals, get_last_proverb
 
@@ -397,12 +397,12 @@ async def proverb(ctx, cont_prov: bool = False):
 
                         if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
                             await ctx.send(_meaning)
-                            sleep_time = (datetime(datetime.now().year, datetime.now().month, datetime.now().day + 1, 8, 0, 0) - datetime.now()).seconds
+                            sleep_time = ((datetime(datetime.now().year, datetime.now().month, datetime.now().day) + timedelta(days=1, hours=8)) - datetime.now()).seconds
                             await sleep(sleep_time)
                 else:
                     # same day but after time, postpone until next day:
-                    # await ctx.send(f"Sleep time: {(datetime(datetime.now().year, datetime.now().month, datetime.now().day + 1, 8, 0, 0) - datetime.now()).seconds} seconds")
-                    await sleep((datetime(datetime.now().year, datetime.now().month, datetime.now().day + 1, 8, 0, 0) - datetime.now()).seconds)
+                    sleep_time = ((datetime(datetime.now().year, datetime.now().month, datetime.now().day) + timedelta(days=1, hours=8)) - datetime.now()).seconds
+                    await sleep(sleep_time)
             else:
                 # same day but too early:
                 await sleep(
