@@ -1,5 +1,7 @@
 # bot.py
 import os
+import glob
+import pickle as pkl
 import random
 import discord
 import numpy as np
@@ -10,6 +12,17 @@ from asyncio import sleep
 from datetime import datetime, timedelta
 import socket
 from proverbs.proverbs import use_proverb, get_proverb_history, get_proverb_numericals, get_last_proverb
+
+proverb_scores = {}
+
+# load proverb_scores:
+guilds = glob.glob('./proverbs/proverb_scores_*.pkl')
+print(guilds)
+for guild in guilds:
+    guild_id = int(guild.split('proverb_scores_')[-1].split('.pkl')[0])
+    proverb_scores[guild_id] = pkl.load(open(f'./proverbs/proverb_scores_{guild_id}.pkl', 'rb'))
+
+print(proverb_scores)
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -105,7 +118,7 @@ async def on_message(message):
     return
 
 # proverb score function [ctx.guild.id]
-proverb_scores = {}
+# proverb_scores = {}
 proverb_real = {}
 proverb_fake = {}
 
@@ -420,6 +433,8 @@ async def proverb(ctx, cont_prov: bool = False):
         # if loop_proverb is false or non-existent, set to True
         loop_proverb[ctx.guild.id] = True
 
+        _use_generated = None
+
         # handle multiple instances by assigning individual ids
         if loop_proverb_id.get(ctx.guild.id, None) == None:
             loop_proverb_id[ctx.guild.id] = {}
@@ -430,10 +445,12 @@ async def proverb(ctx, cont_prov: bool = False):
         # actual loop
         while loop_proverb[ctx.guild.id] and loop_proverb_id[ctx.guild.id][loop_id]:
             if datetime.now().time() > datetime.strptime('08:00:00', '%H:%M:%S').time():
-                if datetime.now().time() < datetime.strptime('10:30:00', '%H:%M:%S').time():
+                # if datetime.now().time() < datetime.strptime('10:30:00', '%H:%M:%S').time():
+                if datetime.now().time() < datetime.strptime('13:00:00', '%H:%M:%S').time():
                     if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
                         if not cont_prov:
-                            _proverb, _meaning = use_proverb()
+                            _use_generated = bool(random.getrandbits(1))
+                            _proverb, _meaning = use_proverb(USE_GENERATED=_use_generated)
                         else:
                             _proverb, _meaning = get_last_proverb()
                             cont_prov = False
@@ -443,11 +460,43 @@ async def proverb(ctx, cont_prov: bool = False):
 
                         # wait until 13:00 server time to continue with the answer
                         sleep_time = (datetime(datetime.now().year, datetime.now().month, datetime.now().day, 13, 0, 0) - datetime.now()).seconds
+                        # sleep_time = 10
                         await sleep(sleep_time)
 
                         # check if loop has not been canceled, then send the meaning
                         if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
                             await ctx.send(_meaning)
+
+                            if proverb_scores.get(ctx.guild.id, False) == False:
+                                # create score list
+                                print(f'Guild id not found for {ctx.guild.id}')
+                                proverb_scores[ctx.guild.id] = {}
+
+                            if _use_generated is not None:
+                                # process votes
+                                if _use_generated:
+                                    # verify if all users who voted are in the score list
+                                    users_to_add = [userid for userid in proverb_fake[ctx.guild.id] if userid not in proverb_scores[ctx.guild.id].keys()]
+                                    for userid in users_to_add:
+                                        proverb_scores[ctx.guild.id][userid] = 0
+                                    # add points to bot voters
+                                    for userid in proverb_fake[ctx.guild.id]:
+                                        proverb_scores[ctx.guild.id][userid] += 1
+                                elif not _use_generated:
+                                    # add points to real voters
+                                    users_to_add = [userid for userid in proverb_real[ctx.guild.id] if userid not in list(proverb_scores[ctx.guild.id].keys())]
+                                    for userid in users_to_add:
+                                        proverb_scores[ctx.guild.id][userid] = 0
+                                    #add points to real voters
+                                    for userid in proverb_real[ctx.guild.id]:
+                                        proverb_scores[ctx.guild.id][userid] += 1
+                                # return a list of scores
+                                _message = 'Score list: \n'
+                                for _id, score in proverb_scores[ctx.guild.id].items():
+                                    _message += f'{bot.get_user(_id).name}: {score}\n'
+                                await ctx.send(_message)
+                                pkl.dump(proverb_scores[ctx.guild.id],
+                                         open(f'./proverbs/proverb_scores_{ctx.guild.id}.pkl', 'wb'))
 
                             # wait until 08:00 server time the next day to continue with the next iteration
                             sleep_time = ((datetime(datetime.now().year, datetime.now().month, datetime.now().day) + timedelta(days=1, hours=8)) - datetime.now()).seconds
