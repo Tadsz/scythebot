@@ -385,7 +385,6 @@ async def proverb(ctx, cont_prov: bool = False):
             if datetime.now().time() > datetime.strptime('08:00:00', '%H:%M:%S').time():
                 if datetime.now().time() < datetime.strptime('10:30:00', '%H:%M:%S').time():
                     if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
-                        # send answer
                         if not cont_prov:
                             _proverb, _meaning = use_proverb()
                         else:
