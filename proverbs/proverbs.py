@@ -2,14 +2,21 @@ from datetime import datetime, time
 import pandas as pd
 
 
-def use_proverb():
-    data = pd.read_csv('sayings.csv')
+def use_proverb(USE_GENERATED: bool = False):
+    if USE_GENERATED:
+        proverb_file = './proverbs/generated_proverbs.csv'
+    else:
+        proverb_file = './proverbs/sayings.csv'
+    data = pd.read_csv(proverb_file)
     index = data.loc[data['used'].isna()]['index'].iloc[0]
     mask = data['index'] == index
     proverb = data.loc[mask]['proverb'].iloc[0]
-    meaning = data.loc[mask]['meaning'].iloc[0]
+    if USE_GENERATED:
+        meaning = 'This was a generated proverb'
+    else:
+        meaning = data.loc[mask]['meaning'].iloc[0]
     data.loc[data['index'] == index, 'used'] = datetime.now()
-    data.to_csv('sayings.csv', index=False)
+    data.to_csv(proverb_file, index=False)
     return proverb, meaning
 
 def get_proverb_history(num:int=7):

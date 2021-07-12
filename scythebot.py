@@ -9,7 +9,7 @@ import asyncio
 from asyncio import sleep
 from datetime import datetime, timedelta
 import socket
-from proverbs import use_proverb, get_proverb_history, get_proverb_numericals, get_last_proverb
+from proverbs.proverbs import use_proverb, get_proverb_history, get_proverb_numericals, get_last_proverb
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
