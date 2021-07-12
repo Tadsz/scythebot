@@ -391,12 +391,19 @@ async def proverb(ctx, cont_prov: bool = False):
                         else:
                             _proverb, _meaning = get_last_proverb()
                             cont_prov = False
+
+                        # send proverb
                         await ctx.send(_proverb)
+
+                        # wait until 13:00 server time to continue with the answer
                         sleep_time = (datetime(datetime.now().year, datetime.now().month, datetime.now().day, 13, 0, 0) - datetime.now()).seconds
                         await sleep(sleep_time)
 
+                        # check if loop has not been canceled, then send the meaning
                         if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
                             await ctx.send(_meaning)
+
+                            # wait until 08:00 server time the next day to continue with the next iteration
                             sleep_time = ((datetime(datetime.now().year, datetime.now().month, datetime.now().day) + timedelta(days=1, hours=8)) - datetime.now()).seconds
                             await sleep(sleep_time)
                 else:
