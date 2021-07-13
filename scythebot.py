@@ -448,6 +448,11 @@ async def proverb(ctx, cont_prov: bool = False):
                                     #add points to real voters
                                     for userid in proverb_real[ctx.guild.id]:
                                         proverb_scores[ctx.guild.id][userid] += 1
+
+                                # empty list of current votes
+                                proverb_real[ctx.guild.id] = []
+                                proverb_fake[ctx.guild.id] = []
+
                                 # return a list of scores
                                 _message = 'Score list: \n'
                                 for _id, score in proverb_scores[ctx.guild.id].items():
