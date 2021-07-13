@@ -509,11 +509,39 @@ async def stop_proverb(ctx, loop_id: int = None):
 
 @bot.command(name='next.proverb')
 async def next_proverb(ctx, wait_time: int = 300):
-    proverb, meaning = use_proverb()
+    proverb, meaning = use_proverb(USE_GENERATED=False)
     await ctx.send(proverb)
     await sleep(wait_time)
     await ctx.send(meaning)
     return
+
+@bot.command(name='next.generated.proverb')
+async def next_proverb(ctx, wait_time: int = 300):
+    proverb, meaning = use_proverb(USE_GENERATED=True)
+    await ctx.send(proverb)
+    await sleep(wait_time)
+    await ctx.send(meaning)
+    return
+
+@bot.command(name='next.random.proverb', aliases=['nrp'])
+async def next_proverb(ctx, p: float = 0.50, wait_time: int = 300):
+    if p < 0:
+        p = 0.50
+    if p > 1:
+        p = 0.50
+
+    _use_generated = np.random.rand() > p
+
+    proverb, meaning = use_proverb(USE_GENERATED=_use_generated)
+
+    await ctx.send(proverb)
+
+    await sleep(wait_time)
+
+    await ctx.send(meaning)
+    return
+
+
 
 @bot.command(name='hist.proverb')
 async def proverb_history(ctx, num: int = 7):
