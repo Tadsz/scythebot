@@ -72,48 +72,6 @@ async def on_message(message):
             resp = random.choice(range(0, len(response_responses)))
             await ctx.send(response_responses[resp])
             return
-    # keep score for generated proverbs
-    if any(x in message.content for x in ['real', 'reel', 'rael', 'riel', 'echt', 'fake', 'feek', 'faka', 'fayk', 'nep', 'generated', 'bot']):
-        if loop_proverb.get(message.guild.id, False) == True:
-            # loop is running
-            if datetime.now().time() > datetime.strptime('08:00:00', '%H:%M:%S').time():
-                if datetime.now().time() < datetime.strptime('22:00:00', '%H:%M:%S').time():
-                    # allow guesses
-                    ctx = await bot.get_context(message)
-                    _fake_vote = False
-                    _real_vote = False
-                    if any(x in message.content for x in ['real', 'reel', 'rael', 'riel', 'echt']):
-                        # mark for real vote
-                        _real_vote = True
-
-                    if any(x in message.content for x in ['fake', 'feek', 'faka', 'fayk', 'nep', 'generated', 'bot']):
-                        # mark for fake vote
-                        _fake_vote = True
-
-                    # check and initialize voting lists
-                    if proverb_fake.get(ctx.guild.id, False) == False:
-                        proverb_fake[ctx.guild.id] = []
-                    if proverb_real.get(ctx.guild.id, False) == False:
-                        proverb_real[ctx.guild.id] = []
-
-                    if _fake_vote & _real_vote:
-                        await ctx.send('Invalid vote')
-                    elif _fake_vote:
-                        # add user if user not included in the list already
-                        if ctx.author.id not in proverb_fake[ctx.guild.id]:
-                            proverb_fake[ctx.guild.id].append(ctx.author.id)
-                        # remove user from other list if already in other list
-                        if ctx.author.id in proverb_real[ctx.guild.id]:
-                            proverb_real[ctx.guild.id] = [x for x in proverb_real[ctx.guild.id] if x != ctx.author.id]
-                        await ctx.send('Voted fake')
-                    elif _real_vote:
-                        # add user if user not included in the list already
-                        if ctx.author.id not in proverb_real[ctx.guild.id]:
-                            proverb_real[ctx.guild.id].append(ctx.author.id)
-                        # remove user from other list if already in other list
-                        if ctx.author.id in proverb_fake[ctx.guild.id]:
-                            proverb_fake[ctx.guild.id] = [x for x in proverb_fake[ctx.guild.id] if x != ctx.author.id]
-                        await ctx.send('Voted real')
     await bot.process_commands(message)
     return
 
@@ -563,5 +521,93 @@ async def proverb_continue(ctx):
     await proverb(ctx, cont_prov=True)
     return
 
+@bot.command(name='true', aliases=['True', 'TRUE', 'TrUe', 'tRuE', 'real', 'Real', 'REAL', 'ReAl', 'rEaL'])
+async def vote_true(ctx):
+    if loop_proverb.get(ctx.guild.id, False) == True:
+
+        # check and initialize voting lists
+        if proverb_fake.get(ctx.guild.id, False) == False:
+            proverb_fake[ctx.guild.id] = []
+        if proverb_real.get(ctx.guild.id, False) == False:
+            proverb_real[ctx.guild.id] = []
+
+        # add user if user not included in the list already
+        if ctx.author.id not in proverb_real[ctx.guild.id]:
+            proverb_real[ctx.guild.id].append(ctx.author.id)
+
+        # remove user from other list if already in other list
+        if ctx.author.id in proverb_fake[ctx.guild.id]:
+            proverb_fake[ctx.guild.id] = [x for x in proverb_fake[ctx.guild.id] if x != ctx.author.id]
+
+        await ctx.author.send('Voted real')
+    return
+
+@bot.command(name='false', aliases=['False', 'FALSE', 'FaLsE', 'fAlSe', 'FaKe', 'Fake', 'fake', 'FAKE', 'fAkE'])
+async def vote_false(ctx):
+    if loop_proverb.get(ctx.guild.id, False) == True:
+
+        # check and initialize voting lists
+        if proverb_fake.get(ctx.guild.id, False) == False:
+            proverb_fake[ctx.guild.id] = []
+        if proverb_real.get(ctx.guild.id, False) == False:
+            proverb_real[ctx.guild.id] = []
+
+        # add user if user not included in the list already
+        if ctx.author.id not in proverb_fake[ctx.guild.id]:
+            proverb_fake[ctx.guild.id].append(ctx.author.id)
+
+        # remove user from other list if already in other list
+        if ctx.author.id in proverb_real[ctx.guild.id]:
+            proverb_real[ctx.guild.id] = [x for x in proverb_real[ctx.guild.id] if x != ctx.author.id]
+
+        await ctx.author.send('Voted fake')
+    return
+
+@bot.command(name='votes.proverb')
+async def show_proverb_votes(ctx):
+    if proverb_fake.get(ctx.guild.id, False) == False:
+        proverb_fake[ctx.guild.id] = []
+    if proverb_real.get(ctx.guild.id, False) == False:
+        proverb_real[ctx.guild.id] = []
+
+    # return a list of scores
+    _message = 'Vote list: \n'
+
+    _message += 'true: ['
+    for _id in proverb_real[ctx.guild.id]:
+        _message += f'{bot.get_user(_id).name}, '
+    _message += ']\n'
+
+    _message += 'false: ['
+    for _id in proverb_fake[ctx.guild.id]:
+        _message += f'{bot.get_user(_id).name}, '
+    _message += ']'
+
+    await ctx.send(_message)
+    return
+
+@bot.command(name='scores.proverb')
+async def show_proverb_scores(ctx):
+    if proverb_scores.get(ctx.guild.id, False) == False:
+        proverb_scores[ctx.guild.id] = {}
+
+    # return a list of scores
+    _message = 'Score list: \n'
+    for _id, score in proverb_scores[ctx.guild.id].items():
+        _message += f'{bot.get_user(_id).name}: {score}\n'
+    await ctx.send(_message)
+    return
+
+@bot.command(name='unvote')
+async def unvote(ctx):
+    if proverb_fake.get(ctx.guild.id, False) == False:
+        proverb_fake[ctx.guild.id] = []
+    if proverb_real.get(ctx.guild.id, False) == False:
+        proverb_real[ctx.guild.id] = []
+
+    proverb_fake[ctx.guild.id] = [x for x in proverb_fake[ctx.guild.id] if x != ctx.author.id]
+    proverb_real[ctx.guild.id] = [x for x in proverb_real[ctx.guild.id] if x != ctx.author.id]
+    await ctx.author.send('Removed from vote list')
+    return
 
 bot.run(TOKEN)
