@@ -406,6 +406,13 @@ async def proverb(ctx, cont_prov: bool = False):
                 # if datetime.now().time() < datetime.strptime('10:30:00', '%H:%M:%S').time():
                 if datetime.now().time() < datetime.strptime('13:00:00', '%H:%M:%S').time():
                     if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
+
+                        # check and initialize voting lists
+                        if proverb_fake.get(ctx.guild.id, False) == False:
+                            proverb_fake[ctx.guild.id] = []
+                        if proverb_real.get(ctx.guild.id, False) == False:
+                            proverb_real[ctx.guild.id] = []
+
                         if not cont_prov:
                             _use_generated = bool(random.getrandbits(1))
                             _proverb, _meaning = use_proverb(USE_GENERATED=_use_generated)
