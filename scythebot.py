@@ -694,4 +694,117 @@ async def unvote(ctx):
     await ctx.author.send('Removed from vote list')
     return
 
+async def add_vote_buttons(posted_message):
+    await posted_message.add_reaction(emoji_real)
+    await posted_message.add_reaction(emoji_fake)
+    return
+
+async def get_votes_from_buttons(ctx, posted_message):
+    posted_message = await ctx.channel.fetch_message(posted_message.id)
+    users_real = None
+    users_fake = None
+
+    for reaction in posted_message.reactions:
+        if str(reaction.emoji) == emoji_fake:
+            users_fake = await reaction.users().flatten()
+        elif str(reaction.emoji) == emoji_real:
+            users_real = await reaction.users().flatten()
+
+    proverb_fake[ctx.guild.id] = []
+    if users_fake is not None:
+        for user in users_fake:
+            if user.id != bot.user.id:
+                proverb_fake[ctx.guild.id].append(user.id)
+
+    proverb_real[ctx.guild.id] = []
+    if users_real is not None:
+        for user in users_real:
+            if user.id != bot.user.id:
+                proverb_real[ctx.guild.id].append(user.id)
+
+    # remove id from both lists if they are duplicates to prevent double votes
+    _fake_voters = proverb_fake[ctx.guild.id].copy()
+    _real_voters = proverb_real[ctx.guild.id].copy()
+
+    proverb_fake[ctx.guild.id] = [userid for userid in proverb_fake[ctx.guild.id] if userid not in _real_voters]
+    proverb_real[ctx.guild.id] = [userid for userid in proverb_real[ctx.guild.id] if userid not in _fake_voters]
+    return
+
+@bot.command(name='alter.scores')
+async def alter_scores(ctx, user: discord.User, score):
+    print('triggered')
+    print(type(score))
+    print(score)
+    print(isinstance(score, int))
+    print(isinstance(score, str))
+    await ctx.send('altering scores')
+    if proverb_scores.get(ctx.guild.id, False) == False:
+        proverb_scores[ctx.guild.id] = {}
+
+    if proverb_scores[ctx.guild.id].get(user.id, False) == False:
+        print('triggered scorelist')
+        proverb_scores[ctx.guild.id][user.id] = 0
+
+    if isinstance(score, int):
+        print('triggered int')
+        proverb_scores[ctx.guild.id][user.id] = score
+    elif isinstance(score, str):
+        if score[0] == '+':
+            try:
+                add_score = int(score[1:])
+                proverb_scores[ctx.guild.id][user.id] += add_score
+            except:
+                await ctx.send('Score not understood')
+                return
+        elif score[0] == '-':
+            try:
+                subtract_score = int(score[1:])
+                proverb_scores[ctx.guild.id][user.id] -= subtract_score
+            except:
+                await ctx.send('Score not understood')
+                return
+        elif (score[0] == 'x') or (score[0] == '*'):
+            try:
+                mult_score = int(score[1:])
+                proverb_scores[ctx.guild.id][user.id] *= mult_score
+            except:
+                await ctx.send('Score not understood')
+                return
+        elif (score[0] == '/') or (score[0] == ':'):
+            try:
+                div_score = int(score[1:])
+                proverb_scores[ctx.guild.id][user.id] /= div_score
+            except:
+                await ctx.send('Score not understood')
+                return
+
+    await save_proverb_scores(ctx)
+    await show_proverb_scores(ctx)
+
+    return
+
+
+@bot.command(name='testvote')
+async def testvote(ctx):
+    for emoji in ctx.bot.emojis:
+        print(emoji.id)
+    for emoji in ctx.guild.emojis:
+        print(emoji)
+
+    await ctx.message.add_reaction(emoji_fake)
+
+    posted_message = await ctx.send('Test message')
+    # await posted_message.add_reaction(emoji_fake)
+    await add_vote_buttons(posted_message)
+
+    await sleep(3)
+
+    await get_votes_from_buttons(ctx, posted_message)
+
+    # award scores
+    _use_generated = False
+    await process_scores(ctx, _use_generated)
+
+    return
+
 bot.run(TOKEN)
