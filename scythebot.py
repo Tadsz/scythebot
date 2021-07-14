@@ -430,8 +430,7 @@ async def proverb(ctx, cont_prov: bool = False):
 
                         # send proverb
                         posted_message = await ctx.send(_proverb)
-                        await posted_message.add_reaction(emoji_real)
-                        await posted_message.add_reaction(emoji_fake)
+                        await add_vote_buttons(posted_message)
 
                         # wait until 13:00 server time to continue with the answer
                         sleep_time = (datetime(datetime.now().year, datetime.now().month, datetime.now().day, 13, 0, 0) - datetime.now()).seconds
