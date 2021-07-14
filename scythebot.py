@@ -525,26 +525,40 @@ async def next_random_proverb(ctx, p: float = 0.50, wait_time: int = 300):
     return
 
 async def process_scores(ctx, _use_generated):
+    if proverb_scores.get(ctx.guild.id, False) == False:
+        proverb_scores[ctx.guild.id] = {}
+        proverb_counts[ctx.guild.id] = {}
+
     if _use_generated is not None:
+        # verify if all users who voted are in the score list
+        users_to_add = [userid for userid in proverb_fake[ctx.guild.id] + proverb_real[ctx.guild.id] if
+                        userid not in proverb_scores[ctx.guild.id].keys()]
+        for userid in users_to_add:
+            proverb_scores[ctx.guild.id][userid] = 0
+            proverb_counts[ctx.guild.id][userid] = 0
+
         # process votes
         if _use_generated:
-            # verify if all users who voted are in the score list
-            users_to_add = [userid for userid in proverb_fake[ctx.guild.id] if
-                            userid not in proverb_scores[ctx.guild.id].keys()]
-            for userid in users_to_add:
-                proverb_scores[ctx.guild.id][userid] = 0
             # add points to bot voters
             for userid in proverb_fake[ctx.guild.id]:
                 proverb_scores[ctx.guild.id][userid] += 1
+                proverb_counts[ctx.guild.id][userid] += 1
+            for userid in proverb_real[ctx.guild.id]:
+                proverb_counts[ctx.guild.id][userid] += 1
+
         elif not _use_generated:
             # add points to real voters
             users_to_add = [userid for userid in proverb_real[ctx.guild.id] if
-                            userid not in list(proverb_scores[ctx.guild.id].keys())]
+                            userid not in proverb_scores[ctx.guild.id].keys()]
             for userid in users_to_add:
                 proverb_scores[ctx.guild.id][userid] = 0
+                proverb_counts[ctx.guild.id][userid] = 0
             # add points to real voters
             for userid in proverb_real[ctx.guild.id]:
                 proverb_scores[ctx.guild.id][userid] += 1
+                proverb_counts[ctx.guild.id][userid] += 1
+            for userid in proverb_fake[ctx.guild.id]:
+                proverb_counts[ctx.guild.id][userid] += 1
 
         # empty list of current votes
         proverb_real[ctx.guild.id] = []
@@ -555,8 +569,7 @@ async def process_scores(ctx, _use_generated):
         for _id, score in proverb_scores[ctx.guild.id].items():
             _message += f'{bot.get_user(_id).name}: {score}\n'
         await ctx.send(_message)
-        pkl.dump(proverb_scores[ctx.guild.id],
-                 open(f'./proverbs/proverb_scores_{ctx.guild.id}.pkl', 'wb'))
+        await save_proverb_scores(ctx)
     return
 
 
