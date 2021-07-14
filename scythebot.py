@@ -663,13 +663,13 @@ async def alter_scores(ctx, user: discord.User, score):
 
     if proverb_scores.get(ctx.guild.id, False) == False:
         proverb_scores[ctx.guild.id] = {}
+        proverb_counts[ctx.guild.id] = {}
 
     if proverb_scores[ctx.guild.id].get(user.id, False) == False:
-        print('triggered scorelist')
         proverb_scores[ctx.guild.id][user.id] = 0
+        proverb_counts[ctx.guild.id][user.id] = 0
 
     if isinstance(score, int):
-        print('triggered int')
         proverb_scores[ctx.guild.id][user.id] = score
     elif isinstance(score, str):
         if score[0] == '+':
@@ -751,11 +751,8 @@ async def alter_counts(ctx, user: discord.User, count):
                 await ctx.send('Score not understood')
                 return
 
-    await get_votes_from_buttons(ctx, posted_message)
-
-    # award scores
-    _use_generated = False
-    await process_scores(ctx, _use_generated)
+    await save_proverb_scores(ctx)
+    await show_proverb_scores(ctx)
 
     return
 
