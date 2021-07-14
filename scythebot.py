@@ -429,7 +429,9 @@ async def proverb(ctx, cont_prov: bool = False):
                             cont_prov = False
 
                         # send proverb
-                        await ctx.send(_proverb)
+                        posted_message = await ctx.send(_proverb)
+                        await posted_message.add_reaction(emoji_real)
+                        await posted_message.add_reaction(emoji_fake)
 
                         # wait until 13:00 server time to continue with the answer
                         sleep_time = (datetime(datetime.now().year, datetime.now().month, datetime.now().day, 13, 0, 0) - datetime.now()).seconds
@@ -438,12 +440,13 @@ async def proverb(ctx, cont_prov: bool = False):
 
                         # check if loop has not been canceled, then send the meaning
                         if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
+                            await get_votes_from_buttons(ctx, posted_message)
                             await ctx.send(_meaning)
 
                             if proverb_scores.get(ctx.guild.id, False) == False:
                                 # create score list
-                                print(f'Guild id not found for {ctx.guild.id}')
                                 proverb_scores[ctx.guild.id] = {}
+                                proverb_counts[ctx.guild.id] = {}
 
                             await process_scores(ctx, _use_generated)
 
