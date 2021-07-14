@@ -121,45 +121,6 @@ async def on_message(message):
     await bot.process_commands(message)
     return
 
-# proverb score function [ctx.guild.id]
-# proverb_scores = {}
-proverb_real = {}
-proverb_fake = {}
-
-
-# Initialize factions, mats, and rank lists ordered according to factions list
-dfact = {'original': ['Rusviet', 'Crimean', 'Polania', 'Nordic', 'Saxony'], 'add-on': ['Albion', 'Togawa']}
-dfact_full = sum(dfact.values(), [])
-dmats = {'original': ['Industrial', 'Engineering', 'Patriotic', 'Mechanical', 'Agricultural'],
-         'add-on': ['Militant', 'Innovative']}
-dmats_full = sum(dmats.values(), [])
-rank_names = ['F', 'D', 'C', 'B', 'A', 'S', 'SS', 'BANNED']
-drank = {'Industrial': [8, 6, 5, 5, 5, 1, 2],
-         'Engineering': [6, 5, 3, 4, 2, 2, 2],
-         'Patriotic': [5, 8, 4, 4, 4, 3, 3],
-         'Mechanical': [6, 6, 4, 3, 4, 1, 1],
-         'Agricultural': [5, 4, 4, 3, 2, 2, 3],
-         'Militant': [7, 7, 5, 3, 4, 4, 3],
-         'Innovative': [7, 7, 6, 5, 6, 4, 4]}
-
-# default penalty and ban levels
-dpen = 7
-dban = 8
-dfull = 0
-vfact, vmat, vpen, vban, vfull, vjoin = {}, {}, {}, {}, {}, {}
-
-thanks_notation = ['thanks', 'Thanks', 'thanx', 'Thanx', 'Thx', 'thx', 'thanq', ',Thanq', 'dank', 'Dank']
-thanks_responses = ['You\'re welcome!', 'No problem!', 'Alsjeblieft', 'Graag gedaan', 'Your wish is my command',
-                    'Het is dat je het zo lief vroeg', 'Heel fijn om eens bedankt te worden :)', 'Nee, jij bedankt!',
-                    'Veel plezier!', 'Succes met gamen!', 'Zet \'m op!']
-thanks_responded = {}
-
-response_notation = ['lol', 'haha', 'damn', 'oh shit', 'wtf']
-response_responses = ['Het is gewoon heel normaal om bedankt te worden.', 'Ik vind het fijn om bedankt te worden.',
-                      'Wat had je dan verwacht?', 'Ik heb ook gevoelens ja',
-                      '01101100 01100001 01100001 01110100 00100000 01101101 01100101 00100000 01101101 01100101 '
-                      '01110100 00100000 01110010 01110101 01110011 01110100']
-
 
 async def generate(g_players, g_penalty: int, banned_rank: int, g_full: int):
     if (g_full == 1):
