@@ -658,12 +658,9 @@ async def get_votes_from_buttons(ctx, posted_message):
 
 @bot.command(name='alter.scores')
 async def alter_scores(ctx, user: discord.User, score):
-    print('triggered')
-    print(type(score))
-    print(score)
-    print(isinstance(score, int))
-    print(isinstance(score, str))
-    await ctx.send('altering scores')
+    if ctx.author.id not in ADMINS.values():
+        return
+
     if proverb_scores.get(ctx.guild.id, False) == False:
         proverb_scores[ctx.guild.id] = {}
 
@@ -709,21 +706,50 @@ async def alter_scores(ctx, user: discord.User, score):
 
     return
 
+@bot.command(name='alter.counts')
+async def alter_counts(ctx, user: discord.User, count):
+    if ctx.author.id not in ADMINS.values():
+        return
 
-@bot.command(name='testvote')
-async def testvote(ctx):
-    for emoji in ctx.bot.emojis:
-        print(emoji.id)
-    for emoji in ctx.guild.emojis:
-        print(emoji)
+    if proverb_scores.get(ctx.guild.id, False) == False:
+        proverb_scores[ctx.guild.id] = {}
+        proverb_counts[ctx.guild.id] = {}
 
-    await ctx.message.add_reaction(emoji_fake)
+    if proverb_scores[ctx.guild.id].get(user.id, False) == False:
+        proverb_scores[ctx.guild.id][user.id] = 0
+        proverb_counts[ctx.guild.id][user.id] = 0
 
-    posted_message = await ctx.send('Test message')
-    # await posted_message.add_reaction(emoji_fake)
-    await add_vote_buttons(posted_message)
-
-    await sleep(3)
+    if isinstance(count, int):
+        proverb_counts[ctx.guild.id][user.id] = count
+    elif isinstance(count, str):
+        if count[0] == '+':
+            try:
+                add_score = int(count[1:])
+                proverb_counts[ctx.guild.id][user.id] += add_score
+            except:
+                await ctx.send('Score not understood')
+                return
+        elif count[0] == '-':
+            try:
+                subtract_score = int(count[1:])
+                proverb_counts[ctx.guild.id][user.id] -= subtract_score
+            except:
+                await ctx.send('Score not understood')
+                return
+        elif (count[0] == 'x') or (count[0] == '*'):
+            try:
+                mult_score = int(count[1:])
+                proverb_counts[ctx.guild.id][user.id] *= mult_score
+            except:
+                await ctx.send('Score not understood')
+                return
+        elif (count[0] == '/') or (count[0] == ':'):
+            try:
+                div_score = int(count[1:])
+                proverb_counts[ctx.guild.id][user.id] /= div_score
+            except:
+                await ctx.send('Score not understood')
+                return
 
     await get_votes_from_buttons(ctx, posted_message)
 
