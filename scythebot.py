@@ -612,7 +612,6 @@ async def show_proverb_scores(ctx, metric: str = 'sum'):
         for _id, score in proverb_scores[ctx.guild.id].items():
             _message += f'{bot.get_user(_id).name}: {score}\n'
     elif (metric == 'avg') or (metric == 'mean'):
-        print(proverb_counts[ctx.guild.id])
         for _id, score in proverb_scores[ctx.guild.id].items():
             _message += f'{bot.get_user(_id).name}: {score}/{proverb_counts[ctx.guild.id][_id]} ({round(score / proverb_counts[ctx.guild.id][_id] * 100, 1)}%)'
     await ctx.send(_message)
@@ -702,7 +701,6 @@ async def alter_scores(ctx, user: discord.User, score):
 
     await save_proverb_scores(ctx)
     await show_proverb_scores(ctx)
-
     return
 
 @bot.command(name='alter.counts')
