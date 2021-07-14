@@ -37,8 +37,8 @@ for guild in glob.glob('./proverbs/proverb_counts_*.pkl'):
 loop_proverb = {}
 loop_proverb_id = {}
 bot_emoji = "🤖"
-emoji_real = "<:aaf:852985527942774854>"
 emoji_real = "🧑‍🏫"
+emoji_real = "<:aaf:852985527942774854>"
 emoji_fake = "<:juicy:861604768295944242>"
 
 ### SCYTHE SETTINGS
