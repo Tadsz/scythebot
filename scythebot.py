@@ -1,6 +1,7 @@
 # bot.py
 import os
 import glob
+import json
 import pickle as pkl
 import random
 import discord
@@ -17,6 +18,8 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 VALHEIM_HOST = os.getenv('VALHEIM_HOST')
 VALHEIM_PORT = os.getenv('VALHEIM_PORT')
+ADMINS = json.loads(os.getenv('ADMIN_DICT'))
+EMOJIS = json.loads(os.getenv('EMOJIS'))
 sourcelink = 'https://github.com/tadsz/scythebot/'
 botversion = 'alpha010a'
 
@@ -37,9 +40,8 @@ for guild in glob.glob('./proverbs/proverb_counts_*.pkl'):
 loop_proverb = {}
 loop_proverb_id = {}
 bot_emoji = "🤖"
-emoji_real = "🧑‍🏫"
-emoji_real = "<:aaf:852985527942774854>"
-emoji_fake = "<:juicy:861604768295944242>"
+emoji_real = EMOJIS.get('real', "🧑‍🏫")
+emoji_fake = EMOJIS.get('fake', "🤖")
 
 ### SCYTHE SETTINGS
 # Initialize factions, mats, and rank lists ordered according to factions list
