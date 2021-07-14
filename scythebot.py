@@ -88,9 +88,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 @bot.event
 async def on_ready():
     print('Logged in as ScytheBot')
-    print('ScytheBot {}'.format(botversion))
-    print(bot.user)
-    print(bot.user.id)
+    print(f'ScytheBot {botversion} - {bot.user} - {bot.user.id}')
     print('----------')
 
 
