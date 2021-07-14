@@ -573,6 +573,14 @@ async def process_scores(ctx, _use_generated):
     return
 
 
+async def save_proverb_scores(ctx):
+    pkl.dump(proverb_scores[ctx.guild.id],
+             open(f'./proverbs/proverb_scores_{ctx.guild.id}.pkl', 'wb'))
+    pkl.dump(proverb_counts[ctx.guild.id],
+             open(f'./proverbs/proverb_counts_{ctx.guild.id}.pkl', 'wb'))
+    return
+
+
 @bot.command(name='hist.proverb')
 async def proverb_history(ctx, num: int = 7):
     message = get_proverb_history(num)
