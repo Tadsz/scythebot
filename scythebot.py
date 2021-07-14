@@ -665,14 +665,20 @@ async def show_proverb_votes(ctx):
     return
 
 @bot.command(name='scores.proverb')
-async def show_proverb_scores(ctx):
+async def show_proverb_scores(ctx, metric: str = 'sum'):
     if proverb_scores.get(ctx.guild.id, False) == False:
         proverb_scores[ctx.guild.id] = {}
 
     # return a list of scores
     _message = 'Score list: \n'
-    for _id, score in proverb_scores[ctx.guild.id].items():
-        _message += f'{bot.get_user(_id).name}: {score}\n'
+    if metric == 'sum':
+        for _id, score in proverb_scores[ctx.guild.id].items():
+            _message += f'{bot.get_user(_id).name}: {score}\n'
+    elif (metric == 'avg') or (metric == 'mean'):
+        # TODO add counts for participation
+        print(proverb_counts[ctx.guild.id])
+        for _id, score in proverb_scores[ctx.guild.id].items():
+            _message += f'{bot.get_user(_id).name}: {score}/{proverb_counts[ctx.guild.id][_id]} ({round(score / proverb_counts[ctx.guild.id][_id] * 100, 1)}%)'
     await ctx.send(_message)
     return
 
