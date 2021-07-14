@@ -405,7 +405,9 @@ async def proverb(ctx, cont_prov: bool = False):
             loop_proverb_id[ctx.guild.id] = {}
         loop_id = len(loop_proverb_id[ctx.guild.id])  # id is the length of the instances
         loop_proverb_id[ctx.guild.id][loop_id] = True
-        await ctx.send(f'Starting proverb loop_id {loop_id}')
+
+        await ctx.message.add_reaction(bot_emoji)
+        # await ctx.send(f'Starting proverb loop_id {loop_id}')
 
         # actual loop
         while loop_proverb[ctx.guild.id] and loop_proverb_id[ctx.guild.id][loop_id]:
