@@ -35,7 +35,7 @@ for guild in glob.glob('./proverbs/proverb_scores_*.pkl'):
     proverb_scores[guild_id] = pkl.load(open(f'./proverbs/proverb_scores_{guild_id}.pkl', 'rb'))
 for guild in glob.glob('./proverbs/proverb_counts_*.pkl'):
     guild_id = int(guild.split('proverb_counts_')[-1].split('.pkl')[0])
-    proverb_scores[guild_id] = pkl.load(open(f'./proverbs/proverb_counts_{guild_id}.pkl', 'rb'))
+    proverb_counts[guild_id] = pkl.load(open(f'./proverbs/proverb_counts_{guild_id}.pkl', 'rb'))
 
 loop_proverb = {}
 loop_proverb_id = {}
