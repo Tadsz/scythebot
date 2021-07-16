@@ -456,6 +456,8 @@ async def proverb(ctx, cont_prov: bool = False):
                             _use_generated = bool(random.getrandbits(1))
                             _proverb, _meaning = use_proverb(USE_GENERATED=_use_generated)
                         else:
+                            # only works on the last real proverb;
+                            # TODO: add last proverb to persistent variable instead of re-reading
                             _proverb, _meaning = get_last_proverb()
                             cont_prov = False
 
