@@ -411,6 +411,8 @@ async def valheim(ctx):
 
 @bot.command(name='proverb')
 async def proverb(ctx, cont_prov: bool = False):
+    _admin = bot.get_user(ADMINS.get('Tadsz'))
+    await _admin.send(f'Proverb command started by {ctx.author}')
     if dev_mode:
         print(f'Proverb command ran by {ctx.author}')
     if not loop_proverb.get(ctx.guild.id, False):
@@ -433,12 +435,15 @@ async def proverb(ctx, cont_prov: bool = False):
         while loop_proverb[ctx.guild.id] and loop_proverb_id[ctx.guild.id][loop_id]:
             loop_counter += 1
             print(f'Running loop: {loop_counter}')
+            await _admin.send(f'Running loop: {loop_counter}')
             _prov_start = proverb_prov_start.get(ctx.guild.id, proverb_prov_start['default'])
             if datetime.now().time() > datetime.strptime(_prov_start, '%H:%M:%S').time():
-                print(f'Datetime after 08:00:00 late: {datetime.now}')
+                print(f'Datetime after 08:00:00: {datetime.now()}')
+                await _admin.send(f'Datetime after 08:00:00: {datetime.now()}')
                 _prov_end = proverb_prov_end.get(ctx.guild.id, proverb_prov_end['default'])
                 if datetime.now().time() < datetime.strptime(_prov_end, '%H:%M:%S').time():
-                    print(f'Datetime too early')
+                    print(f'Datetime before 13:00:00')
+                    await _admin.send(f'Datetime before 13:00:00')
                     if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
 
                         # check and initialize voting lists
@@ -465,8 +470,11 @@ async def proverb(ctx, cont_prov: bool = False):
                                                        datetime.strptime(proverb_mean_start.get(ctx.guild.id,
                                                                                                 proverb_mean_start['default']),
                                                                          '%H:%M:%S').time()) - datetime.now()).seconds
+                        await _admin.send(f'Proverb sent {datetime.now()} | {sleep_time} seconds')
                         if dev_mode:
-                            sleep_time = 10
+                            print('proverb sent, sleeping for meaning')
+                            print(sleep_time)
+                            sleep_time = 5
                         await sleep(sleep_time)
 
                         # check if loop has not been canceled, then send the meaning
@@ -483,17 +491,44 @@ async def proverb(ctx, cont_prov: bool = False):
                             await process_scores(ctx, _use_generated)
 
                             # wait until 08:00 server time the next day to continue with the next iteration
-                            sleep_time = ((datetime(datetime.now().year, datetime.now().month, datetime.now().day) + timedelta(days=1, hours=8)) - datetime.now()).seconds
+                            sleep_time = (datetime.combine(datetime.now().date() + timedelta(days=1),
+                                                           datetime.strptime(proverb_prov_start.get(ctx.guild.id,
+                                                                                                    proverb_prov_start['default']),
+                                                                             '%H:%M:%S').time()) - datetime.now()).seconds
+
+                            await _admin.send(f'Meaning sent {datetime.now()}, waiting for next day | {sleep_time} seconds')
+                            if dev_mode:
+                                print('meaning sent, now sleeping for next loop')
+                                print(sleep_time)
+                                sleep_time = 10
                             await sleep(sleep_time)
+                            print('meaning sleep time ended')
                 else:
                     # same day but after time, postpone until next day:
-                    sleep_time = ((datetime(datetime.now().year, datetime.now().month, datetime.now().day) + timedelta(days=1, hours=8)) - datetime.now()).seconds
+                    print('loop started too late; waiting until next day')
+                    sleep_time = (datetime.combine(datetime.now().date() + timedelta(days=1),
+                                                   datetime.strptime(proverb_prov_start.get(ctx.guild.id,
+                                                                                            proverb_prov_start[
+                                                                                                'default']),
+                                                                     '%H:%M:%S').time()) - datetime.now()).seconds
+                    await _admin.send(f'Loop started after end time {datetime.now()}; waiting next day | {sleep_time} seconds')
+                    if dev_mode:
+                        print('loop started after end time')
+                        print(sleep_time)
+                        sleep_time = 10
                     await sleep(sleep_time)
             else:
                 # same day but too early:
-                await sleep(
-                    (datetime(datetime.now().year, datetime.now().month, datetime.now().day, 8, 0,
-                              0) - datetime.now()).seconds)
+                sleep_time = (datetime.combine(datetime.now().date(),
+                                               datetime.strptime(proverb_prov_start.get(ctx.guild.id,
+                                                                                        proverb_prov_start['default']),
+                                                                 '%H:%M:%S').time()) - datetime.now()).seconds
+                await _admin.send(f'Same day but too early: {datetime.now()} | sleeping {sleep_time} seconds')
+                if dev_mode:
+                    print('same day too early')
+                    print(sleep_time)
+                    sleep_time = 10
+                await sleep(sleep_time)
     return
 
 
