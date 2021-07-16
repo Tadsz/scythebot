@@ -14,9 +14,8 @@ from datetime import datetime, timedelta
 import socket
 from proverbs.proverbs import use_proverb, get_proverb_history, get_proverb_numericals, get_last_proverb
 
-dev_mode = True
-
 load_dotenv()
+dev_mode = True if os.getenv('SCYTHEBOT_DEBUG_MODE', False) == 'True' else False
 TOKEN = os.getenv('DISCORD_TOKEN')
 VALHEIM_HOST = os.getenv('VALHEIM_HOST')
 VALHEIM_PORT = os.getenv('VALHEIM_PORT')
