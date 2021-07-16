@@ -4,20 +4,13 @@ Python module for the discord ScytheBot to host the Proverbs cog / module
 """
 
 import os
-import glob
 import json
-import pickle as pkl
 import random
 import discord
 import numpy as np
 from discord.ext import commands
 from dotenv import load_dotenv
-from asyncio import sleep
-from datetime import datetime, timedelta
-import socket
 
-from datetime import datetime, time
-import pandas as pd
 
 load_dotenv()
 dev_mode = True if os.getenv('SCYTHEBOT_DEBUG_MODE', False) == 'True' else False

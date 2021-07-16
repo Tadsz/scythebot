@@ -1,16 +1,10 @@
 # bot.py
 import os
-import glob
-import json
-import pickle as pkl
 import random
 import discord
-import numpy as np
 from discord.ext import commands
 from dotenv import load_dotenv
 import asyncio
-from asyncio import sleep
-from datetime import datetime, timedelta
 import socket
 from proverbs.proverbs import Proverbs
 from scythe.scythe import Scythe

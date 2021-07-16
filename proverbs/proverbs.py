@@ -13,10 +13,7 @@ import numpy as np
 from discord.ext import commands
 from dotenv import load_dotenv
 from asyncio import sleep
-from datetime import datetime, timedelta
-import socket
-
-from datetime import datetime, time
+from datetime import datetime, timedelta, time
 import pandas as pd
 
 # PROVERB SETTINGS
