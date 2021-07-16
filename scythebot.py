@@ -14,6 +14,8 @@ from datetime import datetime, timedelta
 import socket
 from proverbs.proverbs import use_proverb, get_proverb_history, get_proverb_numericals, get_last_proverb
 
+dev_mode = True
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 VALHEIM_HOST = os.getenv('VALHEIM_HOST')
@@ -29,6 +31,15 @@ proverb_counts = {}
 proverb_real = {}
 proverb_fake = {}
 
+
+proverb_prov_start = {} # prov_start is desired start time
+proverb_prov_start['default'] = '08:00:00'
+proverb_prov_end = {} # prov_end is the latest allowed to directly start
+proverb_prov_end['default' ] = '13:00:00'
+proverb_mean_start = {} # prov_mean is the timepoint to release the answer
+proverb_mean_start['default'] = '13:00:00'
+
+
 # load proverb_scores:
 for guild in glob.glob('./proverbs/proverb_scores_*.pkl'):
     guild_id = int(guild.split('proverb_scores_')[-1].split('.pkl')[0])
@@ -42,6 +53,10 @@ loop_proverb_id = {}
 bot_emoji = "🤖"
 emoji_real = EMOJIS.get('real', "🧑‍🏫")
 emoji_fake = EMOJIS.get('fake', "🤖")
+
+if dev_mode:
+    emoji_real = "🧑‍🏫"
+    emoji_fake = "🤖"
 
 ### SCYTHE SETTINGS
 # Initialize factions, mats, and rank lists ordered according to factions list
@@ -83,14 +98,18 @@ intents = discord.Intents.default()
 intents.members = True
 discord.Permissions.add_reactions = True
 
-bot = commands.Bot(command_prefix='!', intents=intents)
+if dev_mode:
+    bot = commands.Bot(command_prefix='.', intents=intents)
+else:
+    bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
     print('Logged in as ScytheBot')
     print(f'ScytheBot {botversion} - {bot.user} - {bot.user.id}')
+    print(f'dev_mode={dev_mode}')
     print('----------')
-
+    return
 
 @bot.event
 async def on_message(message):
@@ -393,6 +412,8 @@ async def valheim(ctx):
 
 @bot.command(name='proverb')
 async def proverb(ctx, cont_prov: bool = False):
+    if dev_mode:
+        print(f'Proverb command ran by {ctx.author}')
     if not loop_proverb.get(ctx.guild.id, False):
         # if loop_proverb is false or non-existent, set to True
         loop_proverb[ctx.guild.id] = True
@@ -405,14 +426,20 @@ async def proverb(ctx, cont_prov: bool = False):
         loop_id = len(loop_proverb_id[ctx.guild.id])  # id is the length of the instances
         loop_proverb_id[ctx.guild.id][loop_id] = True
 
+        # acknowledge message
         await ctx.message.add_reaction(bot_emoji)
-        # await ctx.send(f'Starting proverb loop_id {loop_id}')
 
         # actual loop
+        loop_counter = 0
         while loop_proverb[ctx.guild.id] and loop_proverb_id[ctx.guild.id][loop_id]:
-            if datetime.now().time() > datetime.strptime('08:00:00', '%H:%M:%S').time():
-                # if datetime.now().time() < datetime.strptime('10:30:00', '%H:%M:%S').time():
-                if datetime.now().time() < datetime.strptime('13:00:00', '%H:%M:%S').time():
+            loop_counter += 1
+            print(f'Running loop: {loop_counter}')
+            _prov_start = proverb_prov_start.get(ctx.guild.id, proverb_prov_start['default'])
+            if datetime.now().time() > datetime.strptime(_prov_start, '%H:%M:%S').time():
+                print(f'Datetime after 08:00:00 late: {datetime.now}')
+                _prov_end = proverb_prov_end.get(ctx.guild.id, proverb_prov_end['default'])
+                if datetime.now().time() < datetime.strptime(_prov_end, '%H:%M:%S').time():
+                    print(f'Datetime too early')
                     if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
 
                         # check and initialize voting lists
@@ -434,16 +461,23 @@ async def proverb(ctx, cont_prov: bool = False):
 
                         # wait until 13:00 server time to continue with the answer
                         sleep_time = (datetime(datetime.now().year, datetime.now().month, datetime.now().day, 13, 0, 0) - datetime.now()).seconds
-                        # sleep_time = 10
+
+                        sleep_time = (datetime.combine(datetime.now().date(),
+                                                       datetime.strptime(proverb_mean_start.get(ctx.guild.id,
+                                                                                                proverb_mean_start['default']),
+                                                                         '%H:%M:%S').time()) - datetime.now()).seconds
+                        if dev_mode:
+                            sleep_time = 10
                         await sleep(sleep_time)
 
                         # check if loop has not been canceled, then send the meaning
                         if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
                             await get_votes_from_buttons(ctx, posted_message)
-                            await ctx.send(_meaning)
+                            await posted_message.reply(_meaning, mention_author=False)
 
                             if proverb_scores.get(ctx.guild.id, False) == False:
                                 # create score list
+                                print('Creating score and count dicts')
                                 proverb_scores[ctx.guild.id] = {}
                                 proverb_counts[ctx.guild.id] = {}
 
@@ -526,7 +560,9 @@ async def next_random_proverb(ctx, p: float = 0.50, wait_time: int = 300):
     return
 
 async def process_scores(ctx, _use_generated):
+    print('processing scores')
     if proverb_scores.get(ctx.guild.id, False) == False:
+        print('creating scores and counts dicts')
         proverb_scores[ctx.guild.id] = {}
         proverb_counts[ctx.guild.id] = {}
 
@@ -566,10 +602,7 @@ async def process_scores(ctx, _use_generated):
         proverb_fake[ctx.guild.id] = []
 
         # return a list of scores
-        _message = 'Score list: \n'
-        for _id, score in proverb_scores[ctx.guild.id].items():
-            _message += f'{bot.get_user(_id).name}: {score}\n'
-        await ctx.send(_message)
+        await show_proverb_scores(ctx, 'avg')
         await save_proverb_scores(ctx)
     return
 
