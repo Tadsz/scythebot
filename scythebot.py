@@ -82,7 +82,7 @@ async def on_message(message):
 
 
 @commands.command(name='v', help='Get current version')
-async def version(self, ctx):
+async def version(ctx):
     await ctx.send('Current version {}. Source code available at {}'.format(botversion, sourcelink))
     return
 
