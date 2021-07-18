@@ -470,10 +470,10 @@ class Proverbs(commands.Cog):
         # return a list of scores
         _message = 'Score list: \n'
         if metric == 'sum':
-            for _id, score in proverb_scores[ctx.guild.id].items():
+            for _id, score in sorted(proverb_scores[ctx.guild.id].items(), key=lambda x: x[1]):
                 _message += f'{self.bot.get_user(_id).name}: {score}\n'
         elif (metric == 'avg') or (metric == 'mean'):
-            for _id, score in proverb_scores[ctx.guild.id].items():
+            for _id, score in sorted(proverb_scores[ctx.guild.id].items(), key=lambda x: x[1]):
                 _message += f'{self.bot.get_user(_id).name}: {score}/{proverb_counts[ctx.guild.id][_id]} ({round(score / proverb_counts[ctx.guild.id][_id] * 100, 1)}%)\n'
         await ctx.send(_message)
         return
