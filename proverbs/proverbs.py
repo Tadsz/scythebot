@@ -16,52 +16,68 @@ from asyncio import sleep
 from datetime import datetime, timedelta, time
 import pandas as pd
 
-# PROVERB SETTINGS
-load_dotenv()
-dev_mode = True if os.getenv('SCYTHEBOT_DEBUG_MODE', False) == 'True' else False
-ADMINS = json.loads(os.getenv('ADMIN_DICT'))
-EMOJIS = json.loads(os.getenv('EMOJIS'))
-
-
-proverb_scores = {}
-proverb_counts = {}
-proverb_real = {}
-proverb_fake = {}
-
-
-# load proverb_scores:
-for guild in glob.glob('./proverbs/proverb_scores_*.pkl'):
-    guild_id = int(guild.split('proverb_scores_')[-1].split('.pkl')[0])
-    proverb_scores[guild_id] = pkl.load(open(f'./proverbs/proverb_scores_{guild_id}.pkl', 'rb'))
-for guild in glob.glob('./proverbs/proverb_counts_*.pkl'):
-    guild_id = int(guild.split('proverb_counts_')[-1].split('.pkl')[0])
-    proverb_counts[guild_id] = pkl.load(open(f'./proverbs/proverb_counts_{guild_id}.pkl', 'rb'))
-
-
-proverb_prov_start = {} # prov_start is desired start time
-proverb_prov_start['default'] = '08:00:00'
-proverb_prov_end = {} # prov_end is the latest allowed to directly start
-proverb_prov_end['default' ] = '13:00:00'
-proverb_mean_start = {} # prov_mean is the time point to release the answer
-proverb_mean_start['default'] = '13:00:00'
-
-
-loop_proverb = {}
-loop_proverb_id = {}
-
-
-bot_emoji = "🤖"
-emoji_real = EMOJIS.get('real', "🧑‍🏫")
-emoji_fake = EMOJIS.get('fake', "🤖")
-if dev_mode:
-    emoji_real = "🧑‍🏫"
-    emoji_fake = "🤖"
-
 
 class Proverbs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self._last_member = None
+
+        load_dotenv()
+        self.dev_mode = True if os.getenv('SCYTHEBOT_DEBUG_MODE', False) == 'True' else False
+        self.ADMINS = json.loads(os.getenv('ADMIN_DICT'))
+        self.EMOJIS = json.loads(os.getenv('EMOJIS'))
+        self.bot_emoji = "🤖"
+        self.emoji_real = self.EMOJIS.get('real', "🧑‍🏫")
+        self.emoji_fake = self.EMOJIS.get('fake', "🤖")
+        if self.dev_mode:
+            self.emoji_real = "🧑‍🏫"
+            self.emoji_fake = "🤖"
+
+        self.proverb_prov_start = {'default': '08:00:00'}  # prov_start is desired start time
+        self.proverb_prov_end = {'default': '13:00:00'}  # prov_end is the latest allowed to directly start
+        self.proverb_mean_start = {'default': '13:00:00'}  # prov_mean is the time point to release the answer
+
+        self.proverb_real = {}
+        self.proverb_fake = {}
+
+        self.loop_proverb = {}
+        self.loop_proverb_id = {}
+
+        # TODO: place scores/variables in self
+        self.proverb_score = {}
+
+        if len(glob.glob('./proverbs/proverb_scores_*.pkl')) > 0:
+            # old datafiles detected; load and convert dataset
+            old_scores_files = glob.glob('./proverbs/proverb_scores_*.pkl')
+            old_counts_files = glob.glob('./proverbs/proverb_counts_*.pkl')
+            for guild in old_scores_files:
+                guild_id = int(guild.split('proverb_scores_')[-1].split('.pkl')[0])
+                self.proverb_score[guild_id] = {}
+                old_scores = pkl.load(open(f'./proverbs/proverb_scores_{guild_id}.pkl', 'rb'))
+                for _id, score in old_scores.items():
+                    self.proverb_score[guild_id][_id] = {}
+                    self.proverb_score[guild_id][_id]['score'] = score
+            for guild in old_counts_files:
+                guild_id = int(guild.split('proverb_counts_')[-1].split('.pkl')[0])
+                old_counts = pkl.load(open(f'./proverbs/proverb_counts_{guild_id}.pkl', 'rb'))
+                for _id, count in old_counts.items():
+                    self.proverb_score[guild_id][_id]['count'] = count
+                pkl.dump(self.proverb_score[guild_id], open(f'./proverbs/proverb_score_{guild_id}.pkl', 'wb'))
+            for old_file in old_scores_files + old_counts_files:
+                os.remove(old_file)
+            print('Imported old scores succesfully')
+            print(self.proverb_score)
+
+        # load datasets
+        score_files = glob.glob('./proverbs/proverb_score_*.pkl')
+        for guild in score_files:
+            guild_id = int(guild.split('proverb_score_')[-1].split('.pkl')[0])
+            if self.proverb_score.get(guild_id, False) == False:
+                self.proverb_score[guild_id] = {}
+            self.proverb_score[guild_id].update(pkl.load(open(guild, 'rb')))
+        print('Imported proverb score database')
+        print(self.proverb_score)
+
+        # TODO: version check on saved variables to convert databases
 
     async def read_proverb(self, USE_GENERATED: bool = False):
         if USE_GENERATED:
@@ -115,46 +131,46 @@ class Proverbs(commands.Cog):
         :param cont_prov: boolean for continuation of previous proverb
         :return: None
         """
-        _admin = self.bot.get_user(ADMINS.get('Tadsz'))
+        _admin = self.bot.get_user(self.ADMINS.get('Tadsz'))
         await _admin.send(f'Proverb command started by {ctx.author}')
-        if dev_mode:
+        if self.dev_mode:
             print(f'Proverb command ran by {ctx.author}')
-        if not loop_proverb.get(ctx.guild.id, False):
+        if not self.loop_proverb.get(ctx.guild.id, False):
             # if loop_proverb is false or non-existent, set to True
-            loop_proverb[ctx.guild.id] = True
+            self.loop_proverb[ctx.guild.id] = True
 
             _use_generated = None
 
             # handle multiple instances by assigning individual ids
-            if loop_proverb_id.get(ctx.guild.id, None) == None:
-                loop_proverb_id[ctx.guild.id] = {}
-            loop_id = len(loop_proverb_id[ctx.guild.id])  # id is the length of the instances
-            loop_proverb_id[ctx.guild.id][loop_id] = True
+            if self.loop_proverb_id.get(ctx.guild.id, None) == None:
+                self.loop_proverb_id[ctx.guild.id] = {}
+            loop_id = len(self.loop_proverb_id[ctx.guild.id])  # id is the length of the instances
+            self.loop_proverb_id[ctx.guild.id][loop_id] = True
 
             # acknowledge message
-            await ctx.message.add_reaction(bot_emoji)
+            await ctx.message.add_reaction(self.bot_emoji)
 
             # actual loop
             loop_counter = 0
-            while loop_proverb[ctx.guild.id] and loop_proverb_id[ctx.guild.id][loop_id]:
+            while self.loop_proverb[ctx.guild.id] and self.loop_proverb_id[ctx.guild.id][loop_id]:
                 loop_counter += 1
                 print(f'Running loop: {loop_counter}')
                 await _admin.send(f'Running loop: {loop_counter}')
-                _prov_start = proverb_prov_start.get(ctx.guild.id, proverb_prov_start['default'])
+                _prov_start = self.proverb_prov_start.get(ctx.guild.id, self.proverb_prov_start['default'])
                 if datetime.now().time() > datetime.strptime(_prov_start, '%H:%M:%S').time():
                     print(f'Datetime after 08:00:00: {datetime.now()}')
                     await _admin.send(f'Datetime after 08:00:00: {datetime.now()}')
-                    _prov_end = proverb_prov_end.get(ctx.guild.id, proverb_prov_end['default'])
+                    _prov_end = self.proverb_prov_end.get(ctx.guild.id, self.proverb_prov_end['default'])
                     if datetime.now().time() < datetime.strptime(_prov_end, '%H:%M:%S').time():
                         print(f'Datetime before 13:00:00')
                         await _admin.send(f'Datetime before 13:00:00')
-                        if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
+                        if (self.loop_proverb[ctx.guild.id]) & (self.loop_proverb_id[ctx.guild.id][loop_id]):
 
                             # check and initialize voting lists
-                            if proverb_fake.get(ctx.guild.id, False) == False:
-                                proverb_fake[ctx.guild.id] = []
-                            if proverb_real.get(ctx.guild.id, False) == False:
-                                proverb_real[ctx.guild.id] = []
+                            if self.proverb_fake.get(ctx.guild.id, False) == False:
+                                self.proverb_fake[ctx.guild.id] = []
+                            if self.proverb_real.get(ctx.guild.id, False) == False:
+                                self.proverb_real[ctx.guild.id] = []
 
                             if not cont_prov:
                                 _use_generated = bool(random.getrandbits(1))
@@ -174,40 +190,40 @@ class Proverbs(commands.Cog):
                                                    0) - datetime.now()).seconds
 
                             sleep_time = (datetime.combine(datetime.now().date(),
-                                                           datetime.strptime(proverb_mean_start.get(ctx.guild.id,
-                                                                                                    proverb_mean_start[
-                                                                                                        'default']),
+                                                           datetime.strptime(self.proverb_mean_start.get(ctx.guild.id,
+                                                                                                         self.proverb_mean_start[
+                                                                                                             'default']),
                                                                              '%H:%M:%S').time()) - datetime.now()).seconds
                             await _admin.send(f'Proverb sent {datetime.now()} | {sleep_time} seconds')
-                            if dev_mode:
+                            if self.dev_mode:
                                 print('proverb sent, sleeping for meaning')
                                 print(sleep_time)
                                 sleep_time = 5
                             await sleep(sleep_time)
 
                             # check if loop has not been canceled, then send the meaning
-                            if (loop_proverb[ctx.guild.id]) & (loop_proverb_id[ctx.guild.id][loop_id]):
+                            if (self.loop_proverb[ctx.guild.id]) & (self.loop_proverb_id[ctx.guild.id][loop_id]):
                                 await self.get_votes_from_buttons(ctx, posted_message)
                                 await posted_message.reply(_meaning, mention_author=False)
 
-                                if proverb_scores.get(ctx.guild.id, False) == False:
+                                if self.proverb_score.get(ctx.guild.id, False) == False:
                                     # create score list
                                     print('Creating score and count dicts')
-                                    proverb_scores[ctx.guild.id] = {}
-                                    proverb_counts[ctx.guild.id] = {}
+                                    self.proverb_score[ctx.guild.id] = {}
 
                                 await self.process_scores(ctx, _use_generated)
 
                                 # wait until 08:00 server time the next day to continue with the next iteration
                                 sleep_time = (datetime.combine(datetime.now().date() + timedelta(days=1),
-                                                               datetime.strptime(proverb_prov_start.get(ctx.guild.id,
-                                                                                                        proverb_prov_start[
-                                                                                                            'default']),
-                                                                                 '%H:%M:%S').time()) - datetime.now()).seconds
+                                                               datetime.strptime(
+                                                                   self.proverb_prov_start.get(ctx.guild.id,
+                                                                                               self.proverb_prov_start[
+                                                                                                   'default']),
+                                                                   '%H:%M:%S').time()) - datetime.now()).seconds
 
                                 await _admin.send(
                                     f'Meaning sent {datetime.now()}, waiting for next day | {sleep_time} seconds')
-                                if dev_mode:
+                                if self.dev_mode:
                                     print('meaning sent, now sleeping for next loop')
                                     print(sleep_time)
                                     sleep_time = 10
@@ -217,13 +233,13 @@ class Proverbs(commands.Cog):
                         # same day but after time, postpone until next day:
                         print('loop started too late; waiting until next day')
                         sleep_time = (datetime.combine(datetime.now().date() + timedelta(days=1),
-                                                       datetime.strptime(proverb_prov_start.get(ctx.guild.id,
-                                                                                                proverb_prov_start[
-                                                                                                    'default']),
+                                                       datetime.strptime(self.proverb_prov_start.get(ctx.guild.id,
+                                                                                                     self.proverb_prov_start[
+                                                                                                         'default']),
                                                                          '%H:%M:%S').time()) - datetime.now()).seconds
                         await _admin.send(
                             f'Loop started after end time {datetime.now()}; waiting next day | {sleep_time} seconds')
-                        if dev_mode:
+                        if self.dev_mode:
                             print('loop started after end time')
                             print(sleep_time)
                             sleep_time = 10
@@ -231,12 +247,12 @@ class Proverbs(commands.Cog):
                 else:
                     # same day but too early:
                     sleep_time = (datetime.combine(datetime.now().date(),
-                                                   datetime.strptime(proverb_prov_start.get(ctx.guild.id,
-                                                                                            proverb_prov_start[
-                                                                                                'default']),
+                                                   datetime.strptime(self.proverb_prov_start.get(ctx.guild.id,
+                                                                                                 self.proverb_prov_start[
+                                                                                                     'default']),
                                                                      '%H:%M:%S').time()) - datetime.now()).seconds
                     await _admin.send(f'Same day but too early: {datetime.now()} | sleeping {sleep_time} seconds')
-                    if dev_mode:
+                    if self.dev_mode:
                         print('same day too early')
                         print(sleep_time)
                         sleep_time = 10
@@ -252,12 +268,12 @@ class Proverbs(commands.Cog):
         :return: None
         """
         # stopping one loop, will stop all loops, can be rewritten to only check for the individual loop
-        if loop_proverb.get(ctx.guild.id, False):
-            loop_proverb[ctx.guild.id] = False
+        if self.loop_proverb.get(ctx.guild.id, False):
+            self.loop_proverb[ctx.guild.id] = False
 
             # if no loop_id is given, get loop_ids and find the first True value
             if loop_id is None:
-                loop_ids = loop_proverb_id.get(ctx.guild.id, None)
+                loop_ids = self.loop_proverb_id.get(ctx.guild.id, None)
                 if loop_ids is not None:
                     loop_the_ids = True
                     while loop_the_ids:
@@ -265,8 +281,8 @@ class Proverbs(commands.Cog):
                             if value:
                                 loop_id = key
                                 loop_the_ids = False
-            if loop_proverb_id[ctx.guild.id].get(loop_id):
-                loop_proverb_id[ctx.guild.id][loop_id] = False
+            if self.loop_proverb_id[ctx.guild.id].get(loop_id):
+                self.loop_proverb_id[ctx.guild.id][loop_id] = False
                 await ctx.send('Een gegeven paard moet je niet in de bek kijken')
             else:
                 await ctx.send('Kon geen passende loop vinden om te stoppen')
@@ -338,46 +354,36 @@ class Proverbs(commands.Cog):
         :param _use_generated: boolean for which vote gets points awarded
         :return: None
         """
-        print('processing scores')
-        if proverb_scores.get(ctx.guild.id, False) == False:
-            print('creating scores and counts dicts')
-            proverb_scores[ctx.guild.id] = {}
-            proverb_counts[ctx.guild.id] = {}
+        if self.proverb_score.get(ctx.guild.id, False) == False:
+            self.proverb_score[ctx.guild.id] = {}
 
         if _use_generated is not None:
             # verify if all users who voted are in the score list
-            users_to_add = [userid for userid in proverb_fake[ctx.guild.id] + proverb_real[ctx.guild.id] if
-                            userid not in proverb_scores[ctx.guild.id].keys()]
+            users_to_add = [userid for userid in self.proverb_fake[ctx.guild.id] + self.proverb_real[ctx.guild.id] if
+                            userid not in self.proverb_score[ctx.guild.id].keys()]
             for userid in users_to_add:
-                proverb_scores[ctx.guild.id][userid] = 0
-                proverb_counts[ctx.guild.id][userid] = 0
+                self.proverb_score[ctx.guild.id][userid] = {'score': 0, 'count': 0}
 
             # process votes
             if _use_generated:
                 # add points to bot voters
-                for userid in proverb_fake[ctx.guild.id]:
-                    proverb_scores[ctx.guild.id][userid] += 1
-                    proverb_counts[ctx.guild.id][userid] += 1
-                for userid in proverb_real[ctx.guild.id]:
-                    proverb_counts[ctx.guild.id][userid] += 1
+                for userid in self.proverb_fake[ctx.guild.id]:
+                    self.proverb_score[ctx.guild.id][userid]['score'] += 1
+                    self.proverb_score[ctx.guild.id][userid]['count'] += 1
+                for userid in self.proverb_real[ctx.guild.id]:
+                    self.proverb_score[ctx.guild.id][userid]['count'] += 1
 
             elif not _use_generated:
                 # add points to real voters
-                users_to_add = [userid for userid in proverb_real[ctx.guild.id] if
-                                userid not in proverb_scores[ctx.guild.id].keys()]
-                for userid in users_to_add:
-                    proverb_scores[ctx.guild.id][userid] = 0
-                    proverb_counts[ctx.guild.id][userid] = 0
-                # add points to real voters
-                for userid in proverb_real[ctx.guild.id]:
-                    proverb_scores[ctx.guild.id][userid] += 1
-                    proverb_counts[ctx.guild.id][userid] += 1
-                for userid in proverb_fake[ctx.guild.id]:
-                    proverb_counts[ctx.guild.id][userid] += 1
+                for userid in self.proverb_real[ctx.guild.id]:
+                    self.proverb_score[ctx.guild.id][userid]['score'] += 1
+                    self.proverb_score[ctx.guild.id][userid]['count'] += 1
+                for userid in self.proverb_fake[ctx.guild.id]:
+                    self.proverb_score[ctx.guild.id][userid]['count'] += 1
 
             # empty list of current votes
-            proverb_real[ctx.guild.id] = []
-            proverb_fake[ctx.guild.id] = []
+            self.proverb_real[ctx.guild.id] = []
+            self.proverb_fake[ctx.guild.id] = []
 
             # return a list of scores
             await self.show_proverb_scores(ctx, 'avg')
@@ -390,10 +396,8 @@ class Proverbs(commands.Cog):
         :param ctx: context
         :return:
         """
-        pkl.dump(proverb_scores[ctx.guild.id],
-                 open(f'./proverbs/proverb_scores_{ctx.guild.id}.pkl', 'wb'))
-        pkl.dump(proverb_counts[ctx.guild.id],
-                 open(f'./proverbs/proverb_counts_{ctx.guild.id}.pkl', 'wb'))
+        pkl.dump(self.proverb_score[ctx.guild.id],
+                 open(f'./proverbs/proverb_score_{ctx.guild.id}.pkl', 'wb'))
         return
 
     async def save_variable(self, ctx, variable, file_prefix: str = 'proverb') -> None:
@@ -464,17 +468,18 @@ class Proverbs(commands.Cog):
         :param metric: (sum|avg)
         :return: None
         """
-        if proverb_scores.get(ctx.guild.id, False) == False:
-            proverb_scores[ctx.guild.id] = {}
+        if self.proverb_score.get(ctx.guild.id, False) == False:
+            self.proverb_score[ctx.guild.id] = {}
 
         # return a list of scores
         _message = 'Score list: \n'
         if metric == 'sum':
-            for _id, score in sorted(proverb_scores[ctx.guild.id].items(), key=lambda x: x[1]):
-                _message += f'{self.bot.get_user(_id).name}: {score}\n'
+            for _id, values in sorted(self.proverb_score[ctx.guild.id].items(), key=lambda x: x[1]['score']):
+                _message += f'{self.bot.get_user(_id).name}: {values["score"]}\n'
         elif (metric == 'avg') or (metric == 'mean'):
-            for _id, score in sorted(proverb_scores[ctx.guild.id].items(), key=lambda x: x[1]):
-                _message += f'{self.bot.get_user(_id).name}: {score}/{proverb_counts[ctx.guild.id][_id]} ({round(score / proverb_counts[ctx.guild.id][_id] * 100, 1)}%)\n'
+            for _id, values in sorted(self.proverb_score[ctx.guild.id].items(),
+                                      key=lambda x: x[1]['score'] / x[1]['count'], reverse=True):
+                _message += f'{self.bot.get_user(_id).name}: {values["score"]}/{values["count"]} ({round(values["score"] / values["count"] * 100, 1)}%)\n'
         await ctx.send(_message)
         return
 
@@ -484,8 +489,8 @@ class Proverbs(commands.Cog):
         :param posted_message: Discord message object
         :return: None
         """
-        await posted_message.add_reaction(emoji_real)
-        await posted_message.add_reaction(emoji_fake)
+        await posted_message.add_reaction(self.emoji_real)
+        await posted_message.add_reaction(self.emoji_fake)
         return
 
     async def get_votes_from_buttons(self, ctx, posted_message) -> None:
@@ -500,140 +505,104 @@ class Proverbs(commands.Cog):
         users_fake = None
 
         for reaction in posted_message.reactions:
-            if str(reaction.emoji) == emoji_fake:
+            if str(reaction.emoji) == self.emoji_fake:
                 users_fake = await reaction.users().flatten()
-            elif str(reaction.emoji) == emoji_real:
+            elif str(reaction.emoji) == self.emoji_real:
                 users_real = await reaction.users().flatten()
 
-        proverb_fake[ctx.guild.id] = []
+        self.proverb_fake[ctx.guild.id] = []
         if users_fake is not None:
             for user in users_fake:
                 if user.id != self.bot.user.id:
-                    proverb_fake[ctx.guild.id].append(user.id)
+                    self.proverb_fake[ctx.guild.id].append(user.id)
 
-        proverb_real[ctx.guild.id] = []
+        self.proverb_real[ctx.guild.id] = []
         if users_real is not None:
             for user in users_real:
                 if user.id != self.bot.user.id:
-                    proverb_real[ctx.guild.id].append(user.id)
+                    self.proverb_real[ctx.guild.id].append(user.id)
 
         # remove id from both lists if they are duplicates to prevent double votes
-        _fake_voters = proverb_fake[ctx.guild.id].copy()
-        _real_voters = proverb_real[ctx.guild.id].copy()
+        _fake_voters = self.proverb_fake[ctx.guild.id].copy()
+        _real_voters = self.proverb_real[ctx.guild.id].copy()
 
-        proverb_fake[ctx.guild.id] = [userid for userid in proverb_fake[ctx.guild.id] if userid not in _real_voters]
-        proverb_real[ctx.guild.id] = [userid for userid in proverb_real[ctx.guild.id] if userid not in _fake_voters]
+        self.proverb_fake[ctx.guild.id] = [userid for userid in self.proverb_fake[ctx.guild.id] if
+                                           userid not in _real_voters]
+        self.proverb_real[ctx.guild.id] = [userid for userid in self.proverb_real[ctx.guild.id] if
+                                           userid not in _fake_voters]
         return
 
-    @commands.command(name='prov.alter.scores', aliases=['alter.scores'])
-    async def alter_scores(self, ctx, user: discord.User, score) -> None:
+    @commands.command(name='prov.alter', aliases=['alter.scores', 'alter'])
+    async def alter_scores(self, ctx, item: str, user: discord.User, score: str = None) -> None:
         """
         Admin-only: alter scores in memory of the passed string discord names (as shown in score list)
         :param ctx: context
+        :param item: (score|count|clear) to alter score or count, or remove user from score list
         :param user: discord username (not user object, id or mention!)
         :param score: int for new score or str for desired operation (add/sub/div/mult)
         :return: None
         """
-        if ctx.author.id not in ADMINS.values():
+        if ctx.author.id not in self.ADMINS.values():
+            print('admin not found')
             return
 
-        if proverb_scores.get(ctx.guild.id, False) == False:
-            proverb_scores[ctx.guild.id] = {}
-            proverb_counts[ctx.guild.id] = {}
+        if item not in ('score', 'count', 'clear'):
+            return
 
-        if proverb_scores[ctx.guild.id].get(user.id, False) == False:
-            proverb_scores[ctx.guild.id][user.id] = 0
-            proverb_counts[ctx.guild.id][user.id] = 0
+        if self.proverb_score.get(ctx.guild.id, False) == False:
+            print('ctx not in proverb score')
+            self.proverb_score[ctx.guild.id] = {}
+
+        if self.proverb_score[ctx.guild.id].get(user.id, False) == False:
+            print('user not in score')
+            self.proverb_score[ctx.guild.id][user.id] = {'score': 0, 'count': 0}
+
+        if item == 'clear':
+            self.proverb_score[ctx.guild.id].pop(user.id, None)
+            await self.save_proverb_scores(ctx)
+            await self.show_proverb_scores(ctx)
+            return
+        else:
+            if score is None:
+                await ctx.send('No value submitted.')
+                return
+
+        try:
+            score = int(score)
+        except:
+            pass
 
         if isinstance(score, int):
-            proverb_scores[ctx.guild.id][user.id] = score
+            self.proverb_score[ctx.guild.id][user.id][item] = score
         elif isinstance(score, str):
             if score[0] == '+':
                 try:
                     add_score = int(score[1:])
-                    proverb_scores[ctx.guild.id][user.id] += add_score
+                    self.proverb_score[ctx.guild.id][user.id][item] += add_score
                 except:
                     await ctx.send('Score not understood')
                     return
             elif score[0] == '-':
                 try:
                     subtract_score = int(score[1:])
-                    proverb_scores[ctx.guild.id][user.id] -= subtract_score
+                    self.proverb_score[ctx.guild.id][user.id][item] -= subtract_score
                 except:
                     await ctx.send('Score not understood')
                     return
             elif (score[0] == 'x') or (score[0] == '*'):
                 try:
                     mult_score = int(score[1:])
-                    proverb_scores[ctx.guild.id][user.id] *= mult_score
+                    self.proverb_score[ctx.guild.id][user.id][item] *= mult_score
                 except:
                     await ctx.send('Score not understood')
                     return
             elif (score[0] == '/') or (score[0] == ':'):
                 try:
                     div_score = int(score[1:])
-                    proverb_scores[ctx.guild.id][user.id] /= div_score
+                    self.proverb_score[ctx.guild.id][user.id][item] /= div_score
                 except:
                     await ctx.send('Score not understood')
                     return
-
         await self.save_proverb_scores(ctx)
         await self.show_proverb_scores(ctx)
-        return
-
-    @commands.command(name='prov.alter.counts', aliases=['alter.counts'])
-    async def alter_counts(self, ctx, user: discord.User, count) -> None:
-        """
-        Admin-only: alter counts in memory of the passed string discord names (as shown in score list)
-        :param ctx: context
-        :param user: discord username (not user object, id or mention!)
-        :param count: int for new score or str for desired operation (add/sub/div/mult)
-        :return: None
-        """
-        if ctx.author.id not in ADMINS.values():
-            return
-
-        if proverb_scores.get(ctx.guild.id, False) == False:
-            proverb_scores[ctx.guild.id] = {}
-            proverb_counts[ctx.guild.id] = {}
-
-        if proverb_scores[ctx.guild.id].get(user.id, False) == False:
-            proverb_scores[ctx.guild.id][user.id] = 0
-            proverb_counts[ctx.guild.id][user.id] = 0
-
-        if isinstance(count, int):
-            proverb_counts[ctx.guild.id][user.id] = count
-        elif isinstance(count, str):
-            if count[0] == '+':
-                try:
-                    add_score = int(count[1:])
-                    proverb_counts[ctx.guild.id][user.id] += add_score
-                except:
-                    await ctx.send('Score not understood')
-                    return
-            elif count[0] == '-':
-                try:
-                    subtract_score = int(count[1:])
-                    proverb_counts[ctx.guild.id][user.id] -= subtract_score
-                except:
-                    await ctx.send('Score not understood')
-                    return
-            elif (count[0] == 'x') or (count[0] == '*'):
-                try:
-                    mult_score = int(count[1:])
-                    proverb_counts[ctx.guild.id][user.id] *= mult_score
-                except:
-                    await ctx.send('Score not understood')
-                    return
-            elif (count[0] == '/') or (count[0] == ':'):
-                try:
-                    div_score = int(count[1:])
-                    proverb_counts[ctx.guild.id][user.id] /= div_score
-                except:
-                    await ctx.send('Score not understood')
-                    return
-
-        await self.save_proverb_scores(ctx)
-        await self.show_proverb_scores(ctx)
-
         return
