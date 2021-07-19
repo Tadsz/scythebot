@@ -174,11 +174,11 @@ class Proverbs(commands.Cog):
 
                             if not cont_prov:
                                 _use_generated = bool(random.getrandbits(1))
-                                _proverb, _meaning = self.read_proverb(USE_GENERATED=_use_generated)
+                                _proverb, _meaning = await self.read_proverb(USE_GENERATED=_use_generated)
                             else:
                                 # only works on the last real proverb;
                                 # TODO: add last proverb to persistent variable instead of re-reading
-                                _proverb, _meaning = self.get_last_proverb()
+                                _proverb, _meaning = await self.get_last_proverb()
                                 cont_prov = False
 
                             # send proverb
