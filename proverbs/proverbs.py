@@ -94,7 +94,7 @@ class Proverbs(commands.Cog):
             meaning = data.loc[mask]['meaning'].iloc[0]
         data.loc[data['index'] == index, 'used'] = datetime.now()
         data.to_csv(proverb_file, index=False)
-        return proverb, meaning
+        return proverb, meaning, index
 
     async def get_proverb_history(self, num: int = 7):
         data = pd.read_csv('sayings.csv')
@@ -121,7 +121,8 @@ class Proverbs(commands.Cog):
         selection = data.sort_values('used', ascending=False).head()
         proverb = selection['proverb'].iloc[0]
         meaning = selection['meaning'].iloc[0]
-        return proverb, meaning
+        index = selection['index'].iloc[0]
+        return proverb, meaning, index
 
     @commands.command(name='prov.start')
     async def proverb(self, ctx, cont_prov: bool = False) -> None:
@@ -174,11 +175,11 @@ class Proverbs(commands.Cog):
 
                             if not cont_prov:
                                 _use_generated = bool(random.getrandbits(1))
-                                _proverb, _meaning = await self.read_proverb(USE_GENERATED=_use_generated)
+                                _proverb, _meaning, _index = await self.read_proverb(USE_GENERATED=_use_generated)
                             else:
                                 # only works on the last real proverb;
                                 # TODO: add last proverb to persistent variable instead of re-reading
-                                _proverb, _meaning = await self.get_last_proverb()
+                                _proverb, _meaning, _index = await self.get_last_proverb()
                                 cont_prov = False
 
                             # send proverb
@@ -211,7 +212,7 @@ class Proverbs(commands.Cog):
                                     print('Creating score and count dicts')
                                     self.proverb_score[ctx.guild.id] = {}
 
-                                await self.process_scores(ctx, _use_generated)
+                                await self.process_scores(ctx, _use_generated, _index, posted_message)
 
                                 # wait until 08:00 server time the next day to continue with the next iteration
                                 sleep_time = (datetime.combine(datetime.now().date() + timedelta(days=1),
@@ -334,7 +335,7 @@ class Proverbs(commands.Cog):
 
         _use_generated = np.random.rand() > p
 
-        proverb, meaning = self.read_proverb(USE_GENERATED=_use_generated)
+        proverb, meaning, _index = self.read_proverb(USE_GENERATED=_use_generated)
 
         _posted_message = await ctx.send(proverb)
         await self.add_vote_buttons(_posted_message)
@@ -343,15 +344,17 @@ class Proverbs(commands.Cog):
 
         await _posted_message.reply(meaning)
 
-        await self.process_scores(ctx, _use_generated)
+        await self.process_scores(ctx, _use_generated, _index, _posted_message)
 
         return
 
-    async def process_scores(self, ctx, _use_generated) -> None:
+    async def process_scores(self, ctx, _use_generated, _index, _posted_message) -> None:
         """
         Processes the scores based on the member ids registered for each vote, adds and saves
         :param ctx: context
         :param _use_generated: boolean for which vote gets points awarded
+        :param _index: index from respective source file
+        :param _posted_message: message object
         :return: None
         """
         if self.proverb_score.get(ctx.guild.id, False) == False:
@@ -388,6 +391,39 @@ class Proverbs(commands.Cog):
             # return a list of scores
             await self.show_proverb_scores(ctx, 'avg')
             await self.save_proverb_scores(ctx)
+
+            # initialize tracking record
+
+            track_columns = ['discord_channel_id',
+                             'discord_start_series_id',
+                             'discord_prompt_id',
+                             'proverb_id',
+                             'datetime',
+                             'generated',
+                             'voted_real',
+                             'voted_false']
+
+            _df_vote_tracker = pd.DataFrame([[ctx.guild.id,
+                                              ctx.message.id,
+                                              _posted_message.id,
+                                              _index,
+                                              datetime.now(),
+                                              _use_generated,
+                                              self.proverb_real[ctx.guild.id],
+                                              self.proverb_fake[ctx.guild.id]]],
+                                            columns=track_columns)
+
+            track_file = f'./proverbs/proverb_vote_history_{ctx.guild.id}.csv'
+            if not os.path.exists(track_file):
+                pd.DataFrame([], columns=track_columns).to_csv(track_file, index=False)
+
+            vote_track_concat = pd.concat([pd.read_csv(track_file), _df_vote_tracker])
+            vote_track_concat.to_csv(track_file, index=False)
+
+            # empty list of current votes
+            self.proverb_real[ctx.guild.id] = []
+            self.proverb_fake[ctx.guild.id] = []
+
         return
 
     async def save_proverb_scores(self, ctx) -> None:
