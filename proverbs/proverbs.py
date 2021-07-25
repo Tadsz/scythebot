@@ -361,11 +361,20 @@ class Proverbs(commands.Cog):
             self.proverb_score[ctx.guild.id] = {}
 
         if _use_generated is not None:
+            print(self.proverb_score[ctx.guild.id])
+            # convert old scores where datetime was missing
+            for userid in self.proverb_score[ctx.guild.id].keys():
+                if self.proverb_score[ctx.guild.id][userid].get('last_vote_datetime', False) == False:
+                    self.proverb_score[ctx.guild.id][userid]['last_vote_datetime'] = datetime.now().date()
+
+            print(self.proverb_score[ctx.guild.id])
+
             # verify if all users who voted are in the score list
             users_to_add = [userid for userid in self.proverb_fake[ctx.guild.id] + self.proverb_real[ctx.guild.id] if
                             userid not in self.proverb_score[ctx.guild.id].keys()]
             for userid in users_to_add:
-                self.proverb_score[ctx.guild.id][userid] = {'score': 0, 'count': 0}
+                self.proverb_score[ctx.guild.id][userid] = {'score': 0, 'count': 0,
+                                                            'last_vote_datetime': datetime.now().date()}
 
             # process votes
             if _use_generated:
@@ -373,23 +382,23 @@ class Proverbs(commands.Cog):
                 for userid in self.proverb_fake[ctx.guild.id]:
                     self.proverb_score[ctx.guild.id][userid]['score'] += 1
                     self.proverb_score[ctx.guild.id][userid]['count'] += 1
+                    self.proverb_score[ctx.guild.id][userid]['last_vote_datetime'] = datetime.now().date()
                 for userid in self.proverb_real[ctx.guild.id]:
                     self.proverb_score[ctx.guild.id][userid]['count'] += 1
+                    self.proverb_score[ctx.guild.id][userid]['last_vote_datetime'] = datetime.now().date()
 
             elif not _use_generated:
                 # add points to real voters
                 for userid in self.proverb_real[ctx.guild.id]:
                     self.proverb_score[ctx.guild.id][userid]['score'] += 1
                     self.proverb_score[ctx.guild.id][userid]['count'] += 1
+                    self.proverb_score[ctx.guild.id][userid]['last_vote_datetime'] = datetime.now().date()
                 for userid in self.proverb_fake[ctx.guild.id]:
                     self.proverb_score[ctx.guild.id][userid]['count'] += 1
-
-            # empty list of current votes
-            self.proverb_real[ctx.guild.id] = []
-            self.proverb_fake[ctx.guild.id] = []
+                    self.proverb_score[ctx.guild.id][userid]['last_vote_datetime'] = datetime.now().date()
 
             # return a list of scores
-            await self.show_proverb_scores(ctx, 'avg')
+            await self.show_proverb_scores(ctx, 'time')
             await self.save_proverb_scores(ctx)
 
             # initialize tracking record
@@ -497,13 +506,16 @@ class Proverbs(commands.Cog):
         return
 
     @commands.command(name='prov.scores', aliases=['scores.proverb'])
-    async def show_proverb_scores(self, ctx, metric: str = 'sum') -> None:
+    async def show_proverb_scores(self, ctx, metric: str = 'time') -> None:
         """
         Show current leaderbord (default: sum)
         :param ctx: context
-        :param metric: (sum|avg)
+        :param metric: (sum|avg|time)
         :return: None
         """
+
+        mmr_days = 31
+
         if self.proverb_score.get(ctx.guild.id, False) == False:
             self.proverb_score[ctx.guild.id] = {}
 
@@ -516,6 +528,19 @@ class Proverbs(commands.Cog):
             for _id, values in sorted(self.proverb_score[ctx.guild.id].items(),
                                       key=lambda x: x[1]['score'] / x[1]['count'], reverse=True):
                 _message += f'{self.bot.get_user(_id).name}: {values["score"]}/{values["count"]} ({round(values["score"] / values["count"] * 100, 1)}%)\n'
+        elif (metric == 'time'):
+            df_scores = pd.DataFrame.from_dict(self.proverb_score[ctx.guild.id]).transpose()
+            print(df_scores.info())
+
+            _a = (pd.Timedelta(mmr_days, 'd') - (datetime.now().date() - df_scores['last_vote_datetime'])) / pd.Timedelta(mmr_days, 'd')
+            # prevent negative scores
+            _a[_a<0] = 0
+            df_scores['mmr'] = df_scores['score'] / df_scores['count'] * _a
+
+            df_scores = df_scores.sort_values(['mmr', 'last_vote_datetime', 'score']).copy()
+            for _id, _score, _count, _mmr in zip(df_scores.index, df_scores['score'], df_scores['count'], df_scores['mmr']):
+                if _mmr > 0:
+                    _message += f'{self.bot.get_user(_id).name}: {_score}/{_count} ({int(round(_mmr, 3) * 1000)})\n'
         await ctx.send(_message)
         return
 
