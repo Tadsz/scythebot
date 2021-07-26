@@ -537,7 +537,7 @@ class Proverbs(commands.Cog):
             _a[_a<0] = 0
             df_scores['mmr'] = df_scores['score'] / df_scores['count'] * _a
 
-            df_scores = df_scores.sort_values(['mmr', 'last_vote_datetime', 'score']).copy()
+            df_scores = df_scores.sort_values(['mmr', 'last_vote_datetime', 'score'], ascending=False).copy()
             for _id, _score, _count, _mmr in zip(df_scores.index, df_scores['score'], df_scores['count'], df_scores['mmr']):
                 if _mmr > 0:
                     _message += f'{self.bot.get_user(_id).name}: {_score}/{_count} ({int(round(_mmr, 3) * 1000)})\n'
