@@ -652,8 +652,22 @@ class Proverbs(commands.Cog):
         #_admin = self.bot.get_user(self.ADMINS.get(self.SUPER_ADMIN))
         #await _admin.send(historic_table)
 
+        print(historic_table)
+
         for channel, prompt in zip(historic_table['discord_channel_id'], historic_table['discord_prompt_id']):
-            posted_message = await ctx.channel.fetch_message(int(prompt))
+
+            print(channel)
+            print(type(channel))
+            print(prompt)
+            print(type(prompt))
+
+            channel_id = int(channel)
+            message_id = int(prompt)
+            channel = await self.bot.fetch_channel(channel_id)
+            posted_message = await channel.fetch_message(message_id)
+
+            print('channel and message info')
+
             users_real = None
             users_fake = None
 
