@@ -705,9 +705,9 @@ class Proverbs(commands.Cog):
             _voted_real = [userid for userid in _real_voters if
                                                userid not in _fake_voters]
 
-            historic_table.loc[historic_table['discord_prompt_id'].str.match(prompt), 'voted_real'] = _voted_real
-            historic_table.loc[historic_table['discord_prompt_id'].str.match(prompt), 'voted_false'] = _voted_fake
-            historic_table.loc[historic_table['discord_prompt_id'].str.match(prompt), 'datetime'] = posted_message.created_at
+            historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_real'] = _voted_real
+            historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_false'] = _voted_fake
+            historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'datetime'] = posted_message.created_at
 
         historic_table.to_csv('./proverb/historic_table.csv', index=False)
 
