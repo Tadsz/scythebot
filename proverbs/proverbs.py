@@ -715,7 +715,7 @@ class Proverbs(commands.Cog):
         return
 
     @commands.command(name='get.msg')
-    async def get_historic_votes(self, ctx, channel_id, msg_id):
+    async def get_msg_object(self, ctx, channel_id, msg_id):
         print(channel_id)
         print(msg_id)
 
