@@ -714,3 +714,16 @@ class Proverbs(commands.Cog):
         #await _admin.send('done')
         return
 
+    @commands.command(name='get.msg')
+    async def get_historic_votes(self, ctx, channel_id, msg_id):
+        print(channel_id)
+        print(msg_id)
+
+        channel_id = int(channel_id)
+        msg_id = int(msg_id)
+
+        channel = await self.bot.fetch_channel(channel_id)
+        msg = await channel.fetch_message(msg_id)
+
+        await ctx.send(msg)
+        return
