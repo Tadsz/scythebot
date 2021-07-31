@@ -43,7 +43,6 @@ class Proverbs(commands.Cog):
         self.loop_proverb = {}
         self.loop_proverb_id = {}
 
-        # TODO: place scores/variables in self
         self.proverb_score = {}
 
         if len(glob.glob('./proverbs/proverb_scores_*.pkl')) > 0:
@@ -77,8 +76,7 @@ class Proverbs(commands.Cog):
             self.proverb_score[guild_id].update(pkl.load(open(guild, 'rb')))
         print('Imported proverb score database')
         print(self.proverb_score)
-
-        # TODO: version check on saved variables to convert databases
+        return
 
     async def read_proverb(self, USE_GENERATED: bool = False):
         if USE_GENERATED:
