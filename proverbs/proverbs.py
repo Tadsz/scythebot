@@ -45,28 +45,6 @@ class Proverbs(commands.Cog):
 
         self.proverb_score = {}
 
-        if len(glob.glob('./proverbs/proverb_scores_*.pkl')) > 0:
-            # old datafiles detected; load and convert dataset
-            old_scores_files = glob.glob('./proverbs/proverb_scores_*.pkl')
-            old_counts_files = glob.glob('./proverbs/proverb_counts_*.pkl')
-            for guild in old_scores_files:
-                guild_id = int(guild.split('proverb_scores_')[-1].split('.pkl')[0])
-                self.proverb_score[guild_id] = {}
-                old_scores = pkl.load(open(f'./proverbs/proverb_scores_{guild_id}.pkl', 'rb'))
-                for _id, score in old_scores.items():
-                    self.proverb_score[guild_id][_id] = {}
-                    self.proverb_score[guild_id][_id]['score'] = score
-            for guild in old_counts_files:
-                guild_id = int(guild.split('proverb_counts_')[-1].split('.pkl')[0])
-                old_counts = pkl.load(open(f'./proverbs/proverb_counts_{guild_id}.pkl', 'rb'))
-                for _id, count in old_counts.items():
-                    self.proverb_score[guild_id][_id]['count'] = count
-                pkl.dump(self.proverb_score[guild_id], open(f'./proverbs/proverb_score_{guild_id}.pkl', 'wb'))
-            for old_file in old_scores_files + old_counts_files:
-                os.remove(old_file)
-            print('Imported old scores succesfully')
-            print(self.proverb_score)
-
         # load datasets
         score_files = glob.glob('./proverbs/proverb_score_*.pkl')
         for guild in score_files:
