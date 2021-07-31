@@ -24,6 +24,7 @@ class Proverbs(commands.Cog):
         load_dotenv()
         self.dev_mode = True if os.getenv('SCYTHEBOT_DEBUG_MODE', False) == 'True' else False
         self.ADMINS = json.loads(os.getenv('ADMIN_DICT'))
+        self.SUPER_ADMIN = os.getenv('SUPER_ADMIN')
         self.EMOJIS = json.loads(os.getenv('EMOJIS'))
         self.bot_emoji = "🤖"
         self.emoji_real = self.EMOJIS.get('real', "🧑‍🏫")
@@ -132,7 +133,7 @@ class Proverbs(commands.Cog):
         :param cont_prov: boolean for continuation of previous proverb
         :return: None
         """
-        _admin = self.bot.get_user(self.ADMINS.get('Tadsz'))
+        _admin = self.bot.get_user(self.ADMINS.get(self.SUPER_ADMIN))
         await _admin.send(f'Proverb command started by {ctx.author}')
         if self.dev_mode:
             print(f'Proverb command ran by {ctx.author}')
