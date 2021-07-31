@@ -663,10 +663,17 @@ class Proverbs(commands.Cog):
 
             channel_id = int(channel)
             message_id = int(prompt)
+
+            print(channel_id)
+            print(type(channel_id))
+            print(message_id)
+            print(type(message_id))
+
             channel = await self.bot.fetch_channel(channel_id)
+            print('channel loaded')
             posted_message = await channel.fetch_message(message_id)
 
-            print('channel and message info')
+            print('channel and message info loaded')
 
             users_real = None
             users_fake = None
