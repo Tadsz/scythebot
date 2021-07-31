@@ -704,10 +704,10 @@ class Proverbs(commands.Cog):
                                                userid not in _real_voters]
             _voted_real = [userid for userid in _real_voters if
                                                userid not in _fake_voters]
-
-            historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_real'] = _voted_real
-            historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_false'] = _voted_fake
-            historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'datetime'] = posted_message.created_at
+            print(f"prompt_id: {prompt}\tvoted_real: {_voted_real}\tvoted_fake: {_voted_fake}\tcreated_at: {posted_message.created_at}\n")
+            #historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_real'] = _voted_real
+            #historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_false'] = _voted_fake
+            #historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'datetime'] = posted_message.created_at
 
         historic_table.to_csv('./proverb/historic_table.csv', index=False)
 
