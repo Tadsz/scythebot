@@ -648,8 +648,9 @@ class Proverbs(commands.Cog):
     @commands.command(name='prov.get.historic.votes')
     async def get_historic_votes(self, ctx):
         historic_table = pd.read_csv('./proverbs/tmp_vote_history_file.csv')
-        _admin = self.bot.get_user(self.ADMINS.get(self.SUPER_ADMIN))
-        await _admin.send(historic_table)
+        print(self.SUPER_ADMIN)
+        #_admin = self.bot.get_user(self.ADMINS.get(self.SUPER_ADMIN))
+        #await _admin.send(historic_table)
 
         for channel, prompt in zip(historic_table['discord_channel_id'], historic_table['discord_prompt_id']):
             posted_message = await ctx.channel.fetch_message(int(prompt))
@@ -689,6 +690,6 @@ class Proverbs(commands.Cog):
 
         historic_table.to_csv('./proverb/historic_table.csv', index=False)
 
-        await _admin.send('done')
+        #await _admin.send('done')
         return
 
