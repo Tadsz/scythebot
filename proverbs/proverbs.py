@@ -669,9 +669,9 @@ class Proverbs(commands.Cog):
             print(message_id)
             print(type(message_id))
 
-            channel = await self.bot.fetch_channel(channel_id)
-            print('channel loaded')
-            posted_message = await channel.fetch_message(message_id)
+            #channel = await self.bot.fetch_channel(channel_id)
+            #print('channel loaded')
+            posted_message = await ctx.fetch_message(message_id)
 
             print('channel and message info loaded')
 
