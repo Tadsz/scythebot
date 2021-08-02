@@ -644,3 +644,87 @@ class Proverbs(commands.Cog):
         await self.save_proverb_scores(ctx)
         await self.show_proverb_scores(ctx)
         return
+
+    @commands.command(name='prov.get.historic.votes')
+    async def get_historic_votes(self, ctx):
+        historic_table = pd.read_csv('./proverbs/tmp_vote_history_file.csv')
+        print(self.SUPER_ADMIN)
+        # _admin = self.bot.get_user(self.ADMINS.get(self.SUPER_ADMIN))
+        # await _admin.send(historic_table)
+
+        print(historic_table)
+
+        for channel, prompt in zip(historic_table['discord_channel_id'], historic_table['discord_prompt_id']):
+
+            print(channel)
+            print(type(channel))
+            print(prompt)
+            print(type(prompt))
+
+            channel_id = int(channel)
+            message_id = int(prompt)
+
+            print(channel_id)
+            print(type(channel_id))
+            print(message_id)
+            print(type(message_id))
+
+            channel = await self.bot.fetch_channel(channel_id)
+            print('channel loaded')
+            posted_message = await channel.fetch_message(message_id)
+
+            print('channel and message info loaded')
+
+            users_real = None
+            users_fake = None
+
+            for reaction in posted_message.reactions:
+                if str(reaction.emoji) == self.emoji_fake:
+                    users_fake = await reaction.users().flatten()
+                elif str(reaction.emoji) == self.emoji_real:
+                    users_real = await reaction.users().flatten()
+
+            _voted_fake = []
+            _voted_real = []
+
+            if users_fake is not None:
+                for user in users_fake:
+                    if user.id != self.bot.user.id:
+                        _voted_fake.append(user.id)
+            if users_real is not None:
+                for user in users_real:
+                    if user.id != self.bot.user.id:
+                        _voted_real.append(user.id)
+
+            # remove id from both lists if they are duplicates to prevent double votes
+            _fake_voters = _voted_fake.copy()
+            _real_voters = _voted_real.copy()
+
+            _voted_fake = [userid for userid in _fake_voters if
+                           userid not in _real_voters]
+            _voted_real = [userid for userid in _real_voters if
+                           userid not in _fake_voters]
+            print(
+                f"prompt_id: {prompt}\tvoted_real: {_voted_real}\tvoted_fake: {_voted_fake}\tcreated_at: {posted_message.created_at}\n")
+            # historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_real'] = _voted_real
+            # historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_false'] = _voted_fake
+            # historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'datetime'] = posted_message.created_at
+
+        historic_table.to_csv('./proverb/historic_table.csv', index=False)
+
+        # await _admin.send('done')
+        return
+
+    @commands.command(name='get.msg')
+    async def get_msg_object(self, ctx, channel_id, msg_id):
+        print(channel_id)
+        print(msg_id)
+
+        channel_id = int(channel_id)
+        msg_id = int(msg_id)
+
+        channel = await self.bot.fetch_channel(channel_id)
+        msg = await channel.fetch_message(msg_id)
+
+        await ctx.send(msg)
+        return
