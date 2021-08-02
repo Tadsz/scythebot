@@ -109,7 +109,7 @@ class Proverbs(commands.Cog):
         :param cont_prov: boolean for continuation of previous proverb
         :return: None
         """
-        _admin = self.bot.get_user(self.ADMINS.get(self.SUPER_ADMIN))
+        _admin = self.bot.get_user(int(self.ADMINS.get(self.SUPER_ADMIN)))
         await _admin.send(f'Proverb command started by {ctx.author}')
         if self.dev_mode:
             print(f'Proverb command ran by {ctx.author}')
