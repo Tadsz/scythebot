@@ -500,11 +500,11 @@ class Proverbs(commands.Cog):
         _message = 'Score list: \n'
         if metric == 'sum':
             for _id, values in sorted(self.proverb_score[ctx.guild.id].items(), key=lambda x: x[1]['score']):
-                _message += f'{self.bot.get_user(_id).name}: {values["score"]}\n'
+                _message += f'{self.bot.get_user(_id).display_name}: {values["score"]}\n'
         elif (metric == 'avg') or (metric == 'mean'):
             for _id, values in sorted(self.proverb_score[ctx.guild.id].items(),
                                       key=lambda x: x[1]['score'] / x[1]['count'], reverse=True):
-                _message += f'{self.bot.get_user(_id).name}: {values["score"]}/{values["count"]} ({round(values["score"] / values["count"] * 100, 1)}%)\n'
+                _message += f'{self.bot.get_user(_id).display_name}: {values["score"]}/{values["count"]} ({round(values["score"] / values["count"] * 100, 1)}%)\n'
         elif (metric == 'time'):
             df_scores = pd.DataFrame.from_dict(self.proverb_score[ctx.guild.id]).transpose()
             print(df_scores.info())
@@ -517,7 +517,7 @@ class Proverbs(commands.Cog):
             df_scores = df_scores.sort_values(['mmr', 'last_vote_datetime', 'score'], ascending=False).copy()
             for _id, _score, _count, _mmr in zip(df_scores.index, df_scores['score'], df_scores['count'], df_scores['mmr']):
                 if _mmr > 0:
-                    _message += f'{self.bot.get_user(_id).name}: {_score}/{_count} ({int(round(_mmr, 3) * 1000)})\n'
+                    _message += f'{self.bot.get_user(_id).display_name}: {_score}/{_count} ({int(round(_mmr, 3) * 1000)})\n'
         await ctx.send(_message)
         return
 
