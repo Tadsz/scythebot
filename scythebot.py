@@ -33,6 +33,10 @@ response_responses = ['Het is gewoon heel normaal om bedankt te worden.', 'Ik vi
                       '01101100 01100001 01100001 01110100 00100000 01101101 01100101 00100000 01101101 01100101 '
                       '01110100 00100000 01110010 01110101 01110011 01110100']
 
+### MEME SETTINGS
+response_meme = {}
+
+
 ### DISCORD SETTINGS
 intents = discord.Intents.default()
 intents.members = True
@@ -79,6 +83,17 @@ async def on_message(message):
             resp = random.choice(range(0, len(response_responses)))
             await ctx.send(response_responses[resp])
             return
+
+    if any(x in message.content for x in [x[0] for y in response_meme.values() for x in y]):
+        ctx = await bot.get_context(message)
+        if ctx.author.id in response_meme.keys():
+            if any(x in message.content for x in [x[0] for y in response_meme[ctx.author.id] for x in y]):
+                return_message = message.content
+                for replacement in response_meme[ctx.author.id]:
+                    return_message = return_message.replace(replacement[0], replacement[1])
+                return_message = "_More like:_\n" + return_message
+
+                await ctx.message.reply(return_message)
     await bot.process_commands(message)
     return
 
@@ -143,6 +158,30 @@ async def quote_to_message(ctx, channel_id, message_id, *args):
         text_to_send += word + ' '
     text_to_send = text_to_send[:-1]
     await message.reply(text_to_send)
+    return
+
+
+@bot.command(name='replace', help='Replaces user text')
+async def set_replacement(ctx, userid, source, target):
+    try:
+        userid = int(userid)
+    except:
+        return
+    if response_meme.get(userid, None) == None:
+        response_meme[userid] = []
+    if tuple([source, target]) not in response_meme[userid]:
+        response_meme[userid] += [tuple([source, target])]
+
+    print(response_meme)
+    return
+
+
+@bot.command(name='replace.clear', help='Replaces user text')
+async def clear_replacement(ctx, userid, source = None, target = None):
+    if response_meme.get(userid, None) == None:
+        response_meme[userid] = []
+    if source == None:
+        response_meme[userid] = []
     return
 
 bot.run(TOKEN)
