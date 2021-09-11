@@ -109,8 +109,8 @@ class Proverbs(commands.Cog):
         :param cont_prov: boolean for continuation of previous proverb
         :return: None
         """
-        # _admin = self.bot.get_user(int(self.ADMINS.get(self.SUPER_ADMIN)))
-        # await _admin.send(f'Proverb command started by {ctx.author}')
+        _admin = self.bot.get_user(int(self.ADMINS.get(self.SUPER_ADMIN)))
+        await _admin.send(f'Proverb command started by {ctx.author}')
         if self.dev_mode:
             print(f'Proverb command ran by {ctx.author}')
         if not self.loop_proverb.get(ctx.guild.id, False):
@@ -132,16 +132,16 @@ class Proverbs(commands.Cog):
             loop_counter = 0
             while self.loop_proverb[ctx.guild.id] and self.loop_proverb_id[ctx.guild.id][loop_id]:
                 loop_counter += 1
-                # print(f'Running loop: {loop_counter}')
-                # await _admin.send(f'Running loop: {loop_counter}')
+                print(f'Running loop: {loop_counter}')
+                await _admin.send(f'Running loop: {loop_counter}')
                 _prov_start = self.proverb_prov_start.get(ctx.guild.id, self.proverb_prov_start['default'])
                 if datetime.now().time() > datetime.strptime(_prov_start, '%H:%M:%S').time():
-                    # print(f'Datetime after 08:00:00: {datetime.now()}')
-                    # await _admin.send(f'Datetime after 08:00:00: {datetime.now()}')
+                    print(f'Datetime after 08:00:00: {datetime.now()}')
+                    await _admin.send(f'Datetime after 08:00:00: {datetime.now()}')
                     _prov_end = self.proverb_prov_end.get(ctx.guild.id, self.proverb_prov_end['default'])
                     if datetime.now().time() < datetime.strptime(_prov_end, '%H:%M:%S').time():
-                        # print(f'Datetime before 13:00:00')
-                        # await _admin.send(f'Datetime before 13:00:00')
+                        print(f'Datetime before 13:00:00')
+                        await _admin.send(f'Datetime before 13:00:00')
                         if (self.loop_proverb[ctx.guild.id]) & (self.loop_proverb_id[ctx.guild.id][loop_id]):
 
                             # check and initialize voting lists
@@ -172,7 +172,7 @@ class Proverbs(commands.Cog):
                                                                                                          self.proverb_mean_start[
                                                                                                              'default']),
                                                                              '%H:%M:%S').time()) - datetime.now()).seconds
-                            # await _admin.send(f'Proverb sent {datetime.now()} | {sleep_time} seconds')
+                            await _admin.send(f'Proverb sent {datetime.now()} | {sleep_time} seconds')
                             if self.dev_mode:
                                 print('proverb sent, sleeping for meaning')
                                 print(sleep_time)
@@ -199,24 +199,24 @@ class Proverbs(commands.Cog):
                                                                                                    'default']),
                                                                    '%H:%M:%S').time()) - datetime.now()).seconds
 
-                                # await _admin.send(
-                                #     f'Meaning sent {datetime.now()}, waiting for next day | {sleep_time} seconds')
+                                await _admin.send(
+                                    f'Meaning sent {datetime.now()}, waiting for next day | {sleep_time} seconds')
                                 if self.dev_mode:
                                     print('meaning sent, now sleeping for next loop')
                                     print(sleep_time)
                                     sleep_time = 10
                                 await sleep(sleep_time)
-                                # print('meaning sleep time ended')
+                                print('meaning sleep time ended')
                     else:
                         # same day but after time, postpone until next day:
-                        # print('loop started too late; waiting until next day')
+                        print('loop started too late; waiting until next day')
                         sleep_time = (datetime.combine(datetime.now().date() + timedelta(days=1),
                                                        datetime.strptime(self.proverb_prov_start.get(ctx.guild.id,
                                                                                                      self.proverb_prov_start[
                                                                                                          'default']),
                                                                          '%H:%M:%S').time()) - datetime.now()).seconds
-                        # await _admin.send(
-                        #     f'Loop started after end time {datetime.now()}; waiting next day | {sleep_time} seconds')
+                        await _admin.send(
+                            f'Loop started after end time {datetime.now()}; waiting next day | {sleep_time} seconds')
                         if self.dev_mode:
                             print('loop started after end time')
                             print(sleep_time)
@@ -229,7 +229,7 @@ class Proverbs(commands.Cog):
                                                                                                  self.proverb_prov_start[
                                                                                                      'default']),
                                                                      '%H:%M:%S').time()) - datetime.now()).seconds
-                    # await _admin.send(f'Same day but too early: {datetime.now()} | sleeping {sleep_time} seconds')
+                    await _admin.send(f'Same day but too early: {datetime.now()} | sleeping {sleep_time} seconds')
                     if self.dev_mode:
                         print('same day too early')
                         print(sleep_time)
