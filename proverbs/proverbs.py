@@ -35,7 +35,7 @@ class Proverbs(commands.Cog):
 
         self.proverb_prov_start = {'default': '08:00:00'}  # prov_start is desired start time
         self.proverb_prov_end = {'default': '13:00:00'}  # prov_end is the latest allowed to directly start
-        self.proverb_mean_start = {'default': '13:00:00'}  # prov_mean is the time point to release the answer
+        self.proverb_mean_start = {'default': '15:00:00'}  # prov_mean is the time point to release the answer
 
         self.proverb_real = {}
         self.proverb_fake = {}
@@ -164,7 +164,7 @@ class Proverbs(commands.Cog):
                             await self.add_vote_buttons(posted_message)
 
                             # wait until 13:00 server time to continue with the answer
-                            sleep_time = (datetime(datetime.now().year, datetime.now().month, datetime.now().day, 13, 0,
+                            sleep_time = (datetime(datetime.now().year, datetime.now().month, datetime.now().day, 15, 0,
                                                    0) - datetime.now()).seconds
 
                             sleep_time = (datetime.combine(datetime.now().date(),
