@@ -38,6 +38,7 @@ response_responses = ['Het is gewoon heel normaal om bedankt te worden.', 'Ik vi
 ### MEME SETTINGS
 response_meme = {}
 last_schijtbot = datetime.now() - dt.timedelta(hours=2)
+emojis_list = ['😊', '😁', '😛', '🤓', '👻', '🤖', '💩', '🦾', '🕵️', '🦄']
 print(f'last_schijtbot: {last_schijtbot}')
 
 ### DISCORD SETTINGS
@@ -87,6 +88,11 @@ async def on_message(message):
             resp = random.choice(range(0, len(response_responses)))
             await ctx.send(response_responses[resp])
             return
+
+    if any(x in message.content for x in ['scythebot', 'Scythebot', 'ScytheBot']):
+        ctx = await bot.get_context(message)
+        await ctx.message.add_reaction(random.choice(emojis_list))
+
 
     if any(x in message.content for x in ['schijtbot']):
         ctx = await bot.get_context(message)
