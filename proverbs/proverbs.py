@@ -195,7 +195,7 @@ class Proverbs(commands.Cog):
                                 await self.get_votes_from_buttons(ctx, posted_message)
                                 await posted_message.reply(_meaning, mention_author=False)
 
-                                if self.proverb_score.get(ctx.guild.id, False) == False:
+                                if ctx.guild.id not in self.proverb_score:
                                     # create score list
                                     print('Creating score and count dicts')
                                     self.proverb_score[ctx.guild.id] = {}
