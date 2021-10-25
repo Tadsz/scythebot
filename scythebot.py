@@ -189,7 +189,11 @@ async def set_replacement(ctx, userid, source, target):
 
 
 @bot.command(name='replace.clear', help='Replaces user text')
-async def clear_replacement(ctx, userid, source = None, target = None):
+async def clear_replacement(ctx, userid, source=None, target=None):
+    try:
+        userid = int(userid)
+    except:
+        return
     if response_meme.get(userid, None) == None:
         response_meme[userid] = []
     if source == None:
