@@ -9,6 +9,8 @@ import asyncio
 import socket
 from proverbs.proverbs import Proverbs
 from scythe.scythe import Scythe
+import datetime as dt
+from datetime import datetime
 
 load_dotenv()
 dev_mode = True if os.getenv('SCYTHEBOT_DEBUG_MODE', False) == 'True' else False
@@ -35,7 +37,8 @@ response_responses = ['Het is gewoon heel normaal om bedankt te worden.', 'Ik vi
 
 ### MEME SETTINGS
 response_meme = {}
-
+last_schijtbot = datetime.now() - dt.timedelta(hours=2)
+print(f'last_schijtbot: {last_schijtbot}')
 
 ### DISCORD SETTINGS
 intents = discord.Intents.default()
@@ -60,6 +63,7 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    global last_schijtbot
     if len(message.content) > 100 or message.author.bot:
         return
     if any(x in message.content for x in thanks_notation):
@@ -84,7 +88,15 @@ async def on_message(message):
             await ctx.send(response_responses[resp])
             return
 
+    if any(x in message.content for x in ['schijtbot']):
+        ctx = await bot.get_context(message)
+        await ctx.message.add_reaction('😇')
+        last_schijtbot = datetime.now()
+        print(f'last_schijtbot: {last_schijtbot}')
+
     if any(x in message.content for x in [x[0] for y in response_meme.values() for x in y]):
+        if (datetime.now() - last_schijtbot) < dt.timedelta(hours=1):
+            return
         ctx = await bot.get_context(message)
         if ctx.author.id in response_meme.keys():
             if any(x in message.content for x in [x[0] for y in response_meme[ctx.author.id] for x in y]):
