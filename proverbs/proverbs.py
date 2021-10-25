@@ -56,6 +56,17 @@ class Proverbs(commands.Cog):
         print(self.proverb_score)
         return
 
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        channel = await self.bot.fetch_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
+        # user = await self.bot.fetch_user(payload.user_id)
+        emoji = payload.emoji
+        reaction = discord.utils.get(message.reactions, emoji=payload.emoji.name)
+        if reaction.count > 2:
+            await message.add_reaction(emoji)
+        return
+
     async def read_proverb(self, USE_GENERATED: bool = False):
         if USE_GENERATED:
             proverb_file = './proverbs/generated_proverbs.csv'
