@@ -316,9 +316,7 @@ class Proverbs(commands.Cog):
         :param wait_time: number of seconds to wait until result
         :return:
         """
-        if p < 0:
-            p = 0.50
-        if p > 1:
+        if not 0 < p < 1:
             p = 0.50
 
         _use_generated = np.random.rand() > p
