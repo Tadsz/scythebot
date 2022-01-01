@@ -301,9 +301,9 @@ class Proverbs(commands.Cog):
         :return:
         """
         proverb, meaning = self.read_proverb(USE_GENERATED=True)
-        await ctx.send(proverb)
+        _posted_message = await ctx.send(proverb)
         await sleep(wait_time)
-        await ctx.send(meaning)
+        await _posted_message.reply(meaning)
         return
 
     @commands.command(name='prov.next.random', aliases=['nrp', 'pnr'])
