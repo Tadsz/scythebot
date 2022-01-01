@@ -58,11 +58,23 @@ class Proverbs(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        """
+        Listens to the channel emojis added and if multiple people react, then also react.
+        :param payload:
+        :return:
+        """
         channel = await self.bot.fetch_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
         # user = await self.bot.fetch_user(payload.user_id)
-        emoji = payload.emoji
-        reaction = discord.utils.get(message.reactions, emoji=payload.emoji.name)
+
+        if str(payload.emoji)[:2] == '<:':
+            # custom emoji, use payload.emoji
+            emoji = payload.emoji
+        else:
+            emoji = payload.emoji.name
+
+        reaction = discord.utils.get(message.reactions, emoji=emoji)
+
         if reaction.count > 2:
             await message.add_reaction(emoji)
         return
