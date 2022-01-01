@@ -656,10 +656,22 @@ class Proverbs(commands.Cog):
 
     @commands.command(name='prov.get.historic.votes')
     async def get_historic_votes(self, ctx):
+        """
+        Retrieves the votes from previously entered proverbs. Should only be used manually in case of malfunction.
+        The historic prompts are read from a temporary csv file which should note on each row  the discord channel id,
+        discord message id. This method will return a csv with the user ids separated by which reaction they voted.
+        :param ctx: Context object
+        :return: nothing
+        """
+
+        if ctx.author.id not in self.ADMINS.values():
+            print('admin not found')
+            return
+
         historic_table = pd.read_csv('./proverbs/tmp_vote_history_file.csv')
         print(self.SUPER_ADMIN)
-        # _admin = self.bot.get_user(self.ADMINS.get(self.SUPER_ADMIN))
-        # await _admin.send(historic_table)
+        _admin = self.bot.get_user(self.ADMINS.get(self.SUPER_ADMIN))
+        await _admin.send(historic_table)
 
         print(historic_table)
 
@@ -713,15 +725,14 @@ class Proverbs(commands.Cog):
                            userid not in _real_voters]
             _voted_real = [userid for userid in _real_voters if
                            userid not in _fake_voters]
-            print(
-                f"prompt_id: {prompt}\tvoted_real: {_voted_real}\tvoted_fake: {_voted_fake}\tcreated_at: {posted_message.created_at}\n")
-            # historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_real'] = _voted_real
-            # historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_false'] = _voted_fake
-            # historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'datetime'] = posted_message.created_at
+            print(f"prompt_id: {prompt}\tvoted_real: {_voted_real}\tvoted_fake: {_voted_fake}\tcreated_at: {posted_message.created_at}\n")
+
+            historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_real'] = _voted_real
+            historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'voted_false'] = _voted_fake
+            historic_table.loc[historic_table['discord_prompt_id'] == prompt, 'datetime'] = posted_message.created_at
 
         historic_table.to_csv('./proverb/historic_table.csv', index=False)
-
-        # await _admin.send('done')
+        await _admin.send('done')
         return
 
     @commands.command(name='get.msg')
