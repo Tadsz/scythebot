@@ -585,11 +585,11 @@ class Proverbs(commands.Cog):
         _message = 'Score list: \n'
         if metric == 'sum':
             for _id, values in sorted(self.proverb_score[ctx.guild.id].items(), key=lambda x: x[1]['score']):
-                _message += f'{self.bot.get_user(_id).name}: {values["score"]}\n'
+                _message += f'{await self.get_member_name(ctx, _id)}: {values["score"]}\n'
         elif (metric == 'avg') or (metric == 'mean'):
             for _id, values in sorted(self.proverb_score[ctx.guild.id].items(),
                                       key=lambda x: x[1]['score'] / x[1]['count'], reverse=True):
-                _message += f'{self.bot.get_user(_id).name}: {values["score"]}/{values["count"]} ({round(values["score"] / values["count"] * 100, 1)}%)\n'
+                _message += f'{await self.get_member_name(ctx, _id)}: {values["score"]}/{values["count"]} ({round(values["score"] / values["count"] * 100, 1)}%)\n'
         elif (metric == 'time'):
             df_scores = pd.DataFrame.from_dict(self.proverb_score[ctx.guild.id]).transpose()
             print(df_scores.info())
@@ -602,9 +602,29 @@ class Proverbs(commands.Cog):
             df_scores = df_scores.sort_values(['mmr', 'last_vote_datetime', 'score'], ascending=False).copy()
             for _id, _score, _count, _mmr in zip(df_scores.index, df_scores['score'], df_scores['count'], df_scores['mmr']):
                 if _mmr > 0:
-                    _message += f'{self.bot.get_user(_id).name}: {_score}/{_count} ({int(round(_mmr, 3) * 1000)})\n'
+                    _message += f'{await self.get_member_name(ctx, _id)}: {_score}/{_count} ({int(round(_mmr, 3) * 1000)})\n'
         await ctx.send(_message)
         return
+
+    async def get_member_name(self, ctx, id):
+        """ Takes in a user id and return the users name based on whether these are set:
+                Nick > Display > User > Discriminator
+        :param ctx: context object used for retrieving guild
+        :param id: user id
+        :return:
+        """
+
+        member = ctx.guild.get_member(id)
+
+        if member.nick:
+            member_name = member.nick
+        elif member.display_name:
+            member_name = member.display_name
+        elif member.name:
+            member_name = member.name
+        else:
+            member_name = str(member)
+        return member_name
 
     async def add_vote_buttons(self, posted_message) -> None:
         """
