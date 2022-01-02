@@ -298,7 +298,7 @@ class Proverbs(commands.Cog):
         :param wait_time: integer of the number of seconds to wait before sending the meaning
         :return: None
         """
-        proverb, meaning = self.read_proverb(USE_GENERATED=False)
+        proverb, meaning, index = await self.read_proverb(USE_GENERATED=False)
         _posted_message = await ctx.send(proverb)
         await sleep(wait_time)
         await _posted_message.reply(meaning)
@@ -312,7 +312,7 @@ class Proverbs(commands.Cog):
         :param wait_time: integer of number of seconds to wait before releasing the meaning
         :return:
         """
-        proverb, meaning = self.read_proverb(USE_GENERATED=True)
+        proverb, meaning, index = self.read_proverb(USE_GENERATED=True)
         _posted_message = await ctx.send(proverb)
         await sleep(wait_time)
         await _posted_message.reply(meaning)
