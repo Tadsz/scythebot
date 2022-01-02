@@ -37,6 +37,7 @@ class Proverbs(commands.Cog):
         self.proverb_prov_end = {'default': '13:00:00'}  # prov_end is the latest allowed to directly start
         self.proverb_mean_start = {'default': '15:00:00'}  # prov_mean is the time point to release the answer
 
+        self.proverb_prompts = {}
         self.proverb_real = {}
         self.proverb_fake = {}
 
@@ -77,6 +78,27 @@ class Proverbs(commands.Cog):
 
         if reaction.count > 2:
             await message.add_reaction(emoji)
+
+        # prevent bot from removing voting buttons
+        # prevent bot from removing other reactions except for voting buttons
+        # prevent bot from removing outside of prompt messages
+        if payload.user_id != self.bot.user.id \
+                and emoji in [self.emoji_real, self.emoji_fake] \
+                and payload.message_id in self.proverb_prompts.get(payload.guild_id, []):
+
+            #  TODO: add block to add vote to list
+            # register vote
+
+
+
+            # retrieve the user object to remove from the reactions
+            user = await self.bot.fetch_user(payload.user_id)
+
+            # requires permission: Server Settings > Roles > Scythebot Role > Permissions > Manage Messages to True
+            try:
+                await reaction.remove(user)
+            except discord.errors.Forbidden:
+                print('Permissions improperly set-up; set Manage Messages to True to remove reactions')
         return
 
     async def read_proverb(self, USE_GENERATED: bool = False):
@@ -184,6 +206,13 @@ class Proverbs(commands.Cog):
 
                             # send proverb
                             posted_message = await ctx.send(_proverb)
+
+                            # add prompt id to posted prompts for vote management
+                            if ctx.guild.id not in self.proverb_prompts:
+                                self.proverb_prompts[ctx.guild.id] = []
+                            self.proverb_prompts[ctx.guild.id].append(posted_message.id)
+
+                            # add vote buttons
                             await self.add_vote_buttons(posted_message)
 
                             # wait until 13:00 server time to continue with the answer
