@@ -61,12 +61,12 @@ class Proverbs(commands.Cog):
     async def on_raw_reaction_add(self, payload):
         """
         Listens to the channel emojis added and if multiple people react, then also react.
+        If proverb prompt is running, register and hide votes as well
         :param payload:
         :return:
         """
         channel = await self.bot.fetch_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
-        # user = await self.bot.fetch_user(payload.user_id)
 
         if str(payload.emoji)[:2] == '<:':
             # custom emoji, use payload.emoji
@@ -82,17 +82,18 @@ class Proverbs(commands.Cog):
         # prevent bot from removing voting buttons
         # prevent bot from removing other reactions except for voting buttons
         # prevent bot from removing outside of prompt messages
+        # TODO: register votes in dictionary per prompt message id to prevent leakage when running multiple prompts in
+        #  one discord guild with overlapping timeslots (e.g. proverbs[vote][guild_id][prompt_id])
         if payload.user_id != self.bot.user.id \
                 and emoji in [self.emoji_real, self.emoji_fake] \
                 and payload.message_id in self.proverb_prompts.get(payload.guild_id, []):
 
-            #  TODO: add block to add vote to list
-            # register vote
-
-
-
             # retrieve the user object to remove from the reactions
             user = await self.bot.fetch_user(payload.user_id)
+
+            # register vote
+            vote = True if emoji == self.emoji_real else False
+            await self.register_single_vote(payload.guild_id, user, vote)
 
             # requires permission: Server Settings > Roles > Scythebot Role > Permissions > Manage Messages to True
             try:
@@ -145,6 +146,40 @@ class Proverbs(commands.Cog):
         meaning = selection['meaning'].iloc[0]
         index = selection['index'].iloc[0]
         return proverb, meaning, index
+
+    async def register_single_vote(self, guild_id, user, vote: bool = None):
+        """ Register single votes to voting list to facilitate disappearing votes
+        :param guild_id: discord guild id
+        :param user: discord user object
+        :param vote: True for real, False for fake
+        :return:
+        """
+
+        # check and initialize voting lists
+        if guild_id not in self.proverb_fake:
+            self.proverb_fake[guild_id] = []
+        if guild_id not in self.proverb_real:
+            self.proverb_real[guild_id] = []
+
+        # prevent bot from voting
+        if user.id != self.bot.user.id:
+            if vote:
+                # voted true
+                if user.id not in self.proverb_real[guild_id]:
+                    self.proverb_real[guild_id].append(user.id)
+
+                # remove from fake voters
+                if user.id in self.proverb_fake[guild_id]:
+                    self.proverb_fake[guild_id] = [x for x in self.proverb_fake[guild_id] if x != user.id]
+            else:
+                # voted false
+                if user.id not in self.proverb_fake[guild_id]:
+                    self.proverb_fake[guild_id].append(user.id)
+
+                # remove from true voters
+                if user.id in self.proverb_real[guild_id]:
+                    self.proverb_real[guild_id] = [x for x in self.proverb_real[guild_id] if x != user.id]
+        return
 
     @commands.command(name='prov.start')
     async def proverb(self, ctx, cont_prov: bool = False) -> None:
@@ -598,13 +633,13 @@ class Proverbs(commands.Cog):
             elif str(reaction.emoji) == self.emoji_real:
                 users_real = await reaction.users().flatten()
 
-        self.proverb_fake[ctx.guild.id] = []
+        # self.proverb_fake[ctx.guild.id] = []
         if users_fake is not None:
             for user in users_fake:
                 if user.id != self.bot.user.id:
                     self.proverb_fake[ctx.guild.id].append(user.id)
 
-        self.proverb_real[ctx.guild.id] = []
+        # self.proverb_real[ctx.guild.id] = []
         if users_real is not None:
             for user in users_real:
                 if user.id != self.bot.user.id:
