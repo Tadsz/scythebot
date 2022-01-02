@@ -225,9 +225,9 @@ class Proverbs(commands.Cog):
                         if (self.loop_proverb[ctx.guild.id]) & (self.loop_proverb_id[ctx.guild.id][loop_id]):
 
                             # check and initialize voting lists
-                            if self.proverb_fake.get(ctx.guild.id, False) == False:
+                            if ctx.guild.id not in self.proverb_fake:
                                 self.proverb_fake[ctx.guild.id] = []
-                            if self.proverb_real.get(ctx.guild.id, False) == False:
+                            if ctx.guild.id not in self.proverb_real:
                                 self.proverb_real[ctx.guild.id] = []
 
                             if not cont_prov:
