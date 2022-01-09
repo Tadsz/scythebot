@@ -38,13 +38,28 @@ class Proverbs(commands.Cog):
         self.proverb_mean_start = {'default': '15:00:00'}  # prov_mean is the time point to release the answer
 
         self.proverb_prompts = {}
+
+        # tracks the current votes
         self.proverb_real = {}
         self.proverb_fake = {}
+        # TODO: change proverb_real and proverb_fake dictionaries to a single vote dictionary
+        """
+        self.proverb_fake[ctx.guild.id][user.id, user.id, ...]
+        --> self.proverb_votes[ctx.guild.id][prompt_id][vote][user.id, user.id, ...]
+        """
 
         self.loop_proverb = {}
         self.loop_proverb_id = {}
 
+        # tracks the users scores per guild
         self.proverb_score = {}
+        # TODO: change from dictionary of dictionaries to a dictionary of dataframes per guild
+         # allows for more flexibility later on
+        """
+        self.proverb_score[ctx.guild.id][user.id]{score, count, last_vote_datetime}
+        --> self.proverb_score[ctx.guild.id][pd.DataFrame(x, columns=['user.id', 'prompt.id', 'vote', 'match', 'datetime']
+        df.loc[datetime > datetime.now() - 31 days].groupby(user.id)['match'].mean() * MMR since last vote (?)
+        """
 
         # load datasets
         score_files = glob.glob('./proverbs/proverb_score_*.pkl')
