@@ -9,6 +9,7 @@ import asyncio
 import socket
 from proverbs.proverbs import Proverbs
 from scythe.scythe import Scythe
+from soundboard.soundboard import SoundBoard
 import datetime as dt
 from datetime import datetime
 
@@ -115,8 +116,12 @@ async def on_message(message):
     await bot.process_commands(message)
     return
 
+@bot.command(name='sb', help='Start the soundbard')
+async def start_soundboard(ctx):
+    bot.add_cog(SoundBoard(bot))
+    return
 
-@commands.command(name='v', help='Get current version')
+@bot.command(name='v', help='Get current version')
 async def version(ctx):
     await ctx.send('Current version {}. Source code available at {}'.format(botversion, sourcelink))
     return
