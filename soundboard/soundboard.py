@@ -23,7 +23,7 @@ class SoundBoard(commands.Cog):
         self.SUPER_ADMIN = os.getenv('SUPER_ADMIN')
 
         # load default datasets
-        sb_files = glob.glob('./soundboard/data/d1mp3/*.mp3')
+        sb_files = sorted(glob.glob('./soundboard/data/d1mp3/*.mp3'))
         self.audio_dict = {i: f for i, f in enumerate(sb_files)}
         self.still_talking = False
         return
