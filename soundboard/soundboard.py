@@ -68,6 +68,6 @@ class SoundBoard(commands.Cog):
 
     @commands.command(name='sbh')
     async def show_audio_dict(self, ctx, low: int, high: int):
-        msg = {i: f.split('\\')[-1] for i, f in self.audio_dict.items() if i in range(low, high)}
+        msg = {i: os.path.split(f)[-1] for i, f in self.audio_dict.items() if i in range(low, high)}
         await ctx.author.send(msg)
         return
