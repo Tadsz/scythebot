@@ -50,7 +50,7 @@ class SoundBoard(commands.Cog):
 
             while self.still_talking:
                 # prevent playing the next fragment until the toggle is switched
-                await sleep(1)
+                await sleep(0.1)
 
             self.still_talking = True
             voice_client.play(source, after=self.talk_toggle)
