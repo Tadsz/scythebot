@@ -7,6 +7,7 @@ import os
 import glob
 import json
 import discord
+import pprint
 from asyncio import sleep
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -69,5 +70,12 @@ class SoundBoard(commands.Cog):
     @commands.command(name='sbh')
     async def show_audio_dict(self, ctx, low: int, high: int):
         msg = {i: os.path.split(f)[-1] for i, f in self.audio_dict.items() if i in range(low, high)}
-        await ctx.author.send(msg)
+
+        msg = pprint.pformat(msg, indent=4, width=50)
+        if len(msg) > 2000:
+            chunks = int((len(msg) / 2000) + 1)
+            for i in range(chunks):
+                await ctx.author.send(msg[i*2000:i*2000+2000])
+        else:
+            await ctx.author.send(msg)
         return
