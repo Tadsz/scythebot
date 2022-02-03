@@ -62,7 +62,7 @@ class SoundBoard(commands.Cog):
         voice_channel = ctx.message.author.voice.channel
         voice_client = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
 
-        if voice_client == None:
+        if voice_client is None:
             voice_client = await voice_channel.connect()
         else:
             await voice_client.move_to(voice_channel)
