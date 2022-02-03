@@ -39,10 +39,22 @@ class SoundBoard(commands.Cog):
                 discord.opus.load_opus()
 
         # load default datasets
-        sb_files = sorted(glob.glob('./soundboard/data/d1mp3/*.mp3'))
-        self.audio_dict = {i: f for i, f in enumerate(sb_files)}
+        self.audio_dict = self.reload()
+
+        # toggle to queue fragments if another fragment is still playing
         self.still_talking = False
         return
+
+    @commands.command(name='sbr')
+    async def reload(self, ctx) -> dict:
+        """
+        Scan the data dictionary for mp3 files and create and enumerated dictionary to refer to audio files
+        :param ctx: discord context
+        :return: dict(index: relative filepath)
+        """
+        sb_files = sorted(glob.glob('./soundboard/data/d1mp3/*.mp3'))
+        self.audio_dict = {i: f for i, f in enumerate(sb_files)}
+        return self.audio_dict
 
     @commands.command(name='sbp')
     async def play(self, ctx, *audio_fragment):
