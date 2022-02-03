@@ -118,9 +118,6 @@ async def on_message(message):
 
 @bot.command(name='sb', help='Start the soundbard')
 async def start_soundboard(ctx):
-    LIBOPUS = os.getenv('LIBOPUS')
-    if LIBOPUS:
-        discord.opus.load_opus(LIBOPUS)
     bot.add_cog(SoundBoard(bot))
     return
 

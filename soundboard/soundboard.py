@@ -29,6 +29,15 @@ class SoundBoard(commands.Cog):
         self.ADMINS = json.loads(os.getenv('ADMIN_DICT'))
         self.SUPER_ADMIN = os.getenv('SUPER_ADMIN')
 
+        # load opus library manually for linux systems in which opus is not loaded by default or library needs to be
+        # manually specified in the .env file
+        self.LIBOPUS = os.getenv('LIBOPUS')
+        if not discord.opus.is_loaded():
+            if self.LIBOPUS:
+                discord.opus.load_opus(self.LIBOPUS)
+            else:
+                discord.opus.load_opus()
+
         # load default datasets
         sb_files = sorted(glob.glob('./soundboard/data/d1mp3/*.mp3'))
         self.audio_dict = {i: f for i, f in enumerate(sb_files)}
