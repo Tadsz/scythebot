@@ -124,7 +124,7 @@ class SoundBoard(commands.Cog):
         """
         msg = {i: os.path.split(f)[-1] for i, f in self.audio_dict.items() if i in range(low, high)}
 
-        msg = pprint.pformat(msg, indent=4, width=50)
+        msg = pprint.pformat(msg, indent=4, width=80)
         if len(msg) > 2000:
             chunks = int((len(msg) / 2000) + 1)
             for i in range(chunks):
