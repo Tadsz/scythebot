@@ -20,7 +20,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 VALHEIM_HOST = os.getenv('VALHEIM_HOST')
 VALHEIM_PORT = os.getenv('VALHEIM_PORT')
 sourcelink = 'https://github.com/tadsz/scythebot/'
-botversion = '0.0.1'
+botversion = '0.0.2'
 
 
 ### VALHEIM
