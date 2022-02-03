@@ -1,6 +1,7 @@
 # soundboard.py
 """
 Python module for the discord ScytheBot to host the Soundboard cog / module
+Through fate, luck and a dash of entropy, the SoundBoard module is often named SoundBard
 """
 
 import os
@@ -13,8 +14,13 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from discord import FFmpegPCMAudio, PCMVolumeTransformer
 
+
 class SoundBoard(commands.Cog):
     def __init__(self, bot):
+        """
+        Initializes the SoundBoard cog, loads environment variables
+        :param bot: discord bot object, passed from the main file being executed
+        """
         self.bot = bot
 
         load_dotenv()
@@ -31,10 +37,17 @@ class SoundBoard(commands.Cog):
 
     @commands.command(name='sbp')
     async def play(self, ctx, *audio_fragment):
+        """
+        Play audio fragment by specifying the index of the audio file. Pass multiple integers to queue multiple fragments
+        :param ctx: discord context
+        :param audio_fragment: list of arguments passed in discord [str, ...] which will be converted to [int, ...]
+        :return:
+        """
 
         try:
             audio_fragment = [int(i) for i in audio_fragment]
         except:
+            # non-integer values passed which we can't deal with so return without attempting anything
             return
 
         voice_channel = ctx.message.author.voice.channel
@@ -58,17 +71,36 @@ class SoundBoard(commands.Cog):
         return
 
     def talk_toggle(self, unknown_var):
+        """
+        Toggles the flag to let ScytheBot that the next fragment can start playing
+        :param unknown_var:
+        :return:
+        """
         self.still_talking = not self.still_talking
         return
 
 
     @commands.command(name='sbl')
     async def leave_voice(self, ctx):
-        discord.utils.get(self.bot.voice_clients, guild=ctx.guild).disconnect()
+        """
+        Disconnect from voice channel
+        :param ctx: discord context
+        :return:
+        """
+        await discord.utils.get(self.bot.voice_clients, guild=ctx.guild).disconnect()
         return
 
     @commands.command(name='sbh')
     async def show_audio_dict(self, ctx, low: int, high: int):
+        """
+        Sends a private message to the sender with the current dictionary of index: audio filenames.
+        Parts can be specified through upper and lower bound integers. If dictionary exceeds the characterlimit
+        it will be split across multiple messages. Works both in guild and direct messages to ScytheBot.
+        :param ctx: discord context
+        :param low: lower bound of index
+        :param high: upper bound of index
+        :return:
+        """
         msg = {i: os.path.split(f)[-1] for i, f in self.audio_dict.items() if i in range(low, high)}
 
         msg = pprint.pformat(msg, indent=4, width=50)
