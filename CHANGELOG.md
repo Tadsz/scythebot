@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.0.2] - Speak up - 2022/02/03
+### Added
+- Soundboard cog: join voice chat and stream audio fragments
+
 ## [0.0.1] - Hidden motive - 2022/01/02
 ### Added
 - Proverbs: hide votes if message management permissions are set
