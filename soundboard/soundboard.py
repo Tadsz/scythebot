@@ -100,7 +100,6 @@ class SoundBoard(commands.Cog):
         self.still_talking = not self.still_talking
         return
 
-
     @commands.command(name='sbl')
     async def leave_voice(self, ctx):
         """
