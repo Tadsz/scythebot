@@ -31,12 +31,10 @@ class SoundBoard(commands.Cog):
 
         # load opus library manually for linux systems in which opus is not loaded by default or library needs to be
         # manually specified in the .env file
-        self.LIBOPUS = os.getenv('LIBOPUS')
         if not discord.opus.is_loaded():
+            self.LIBOPUS = os.getenv('LIBOPUS')
             if self.LIBOPUS:
                 discord.opus.load_opus(self.LIBOPUS)
-            else:
-                discord.opus.load_opus()
 
         # load default datasets
         self.audio_dict = self.reload()
