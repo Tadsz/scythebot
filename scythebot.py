@@ -117,8 +117,15 @@ async def on_message(message):
     return
 
 @bot.command(name='sb', help='Start the soundbard')
-async def start_soundboard(ctx):
-    bot.add_cog(SoundBoard(bot))
+async def start_soundboard(ctx, command_type: str = None):
+    if command_type == 'reload':
+        try:
+            bot.remove_cog('SoundBoard')
+            bot.add_cog(SoundBoard(bot))
+        except:
+            pass
+    else:
+        bot.add_cog(SoundBoard(bot))
     return
 
 @bot.command(name='v', help='Get current version')
