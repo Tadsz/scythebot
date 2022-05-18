@@ -146,57 +146,13 @@ async def valheim(ctx):
     await ctx.send(f'{server}:{VALHEIM_PORT}')
     return
 
-@bot.command(name='gpm')
-async def send_guild_message(ctx, channel_id, *args):
-    if ctx.author.id not in ADMINS.values():
-        return
-
-    if isinstance(int(channel_id), int):
-        channel_id = int(channel_id)
-        channel = bot.get_channel(channel_id)
-        message = ''
-        for word in args:
-            message += word + ' '
-        message = message[:-1]
-        await channel.send(message)
-    return
-
-@bot.command(name='rtm')
-async def react_to_message(ctx, channel_id, message_id, emoji):
-    if ctx.author.id not in ADMINS.values():
-        return
-
-    channel_id = int(channel_id)
-    message_id = int(message_id)
-    channel = await bot.fetch_channel(channel_id)
-    message = await channel.fetch_message(message_id)
-    await message.add_reaction(emoji)
-    return
-
-@bot.command(name='qtm')
-async def quote_to_message(ctx, channel_id, message_id, *args):
-    if ctx.author.id not in ADMINS.values():
-        return
-
-    channel_id = int(channel_id)
-    message_id = int(message_id)
-    channel = await bot.fetch_channel(channel_id)
-    message = await channel.fetch_message(message_id)
-
-    text_to_send = ''
-    for word in args:
-        text_to_send += word + ' '
-    text_to_send = text_to_send[:-1]
-    await message.reply(text_to_send)
-    return
-
-
-@bot.command(name='replace', help='Replaces user text')
+@commands.command(name='replace', help='Replaces user text')
 async def set_replacement(ctx, userid, source, target):
     try:
         userid = int(userid)
     except:
         return
+
     if response_meme.get(userid, None) == None:
         response_meme[userid] = []
     if tuple([source, target]) not in response_meme[userid]:
@@ -205,8 +161,7 @@ async def set_replacement(ctx, userid, source, target):
     print(response_meme)
     return
 
-
-@bot.command(name='replace.clear', help='Replaces user text')
+@commands.command(name='replace.clear', help='Replaces user text')
 async def clear_replacement(ctx, userid, source=None, target=None):
     try:
         userid = int(userid)
