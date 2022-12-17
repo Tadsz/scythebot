@@ -10,8 +10,11 @@ import socket
 from proverbs.proverbs import Proverbs
 from scythe.scythe import Scythe
 from soundboard.soundboard import SoundBoard
+from utils.utils import Utils
+from gpt3.gpt3 import OpenAI
 import datetime as dt
 from datetime import datetime
+
 
 load_dotenv()
 dev_mode = True if os.getenv('SCYTHEBOT_DEBUG_MODE', False) == 'True' else False
@@ -46,6 +49,7 @@ print(f'last_schijtbot: {last_schijtbot}')
 intents = discord.Intents.default()
 intents.members = True
 discord.Permissions.add_reactions = True
+intents.messages = True
 
 if dev_mode:
     bot = commands.Bot(command_prefix='.', intents=intents)
@@ -54,6 +58,7 @@ else:
 
 bot.add_cog(Scythe(bot))
 bot.add_cog(Proverbs(bot))
+bot.add_cog(OpenAI(bot))
 
 @bot.event
 async def on_ready():
@@ -63,10 +68,11 @@ async def on_ready():
     print('----------')
     return
 
+
 @bot.event
 async def on_message(message):
     global last_schijtbot
-    if len(message.content) > 100 or message.author.bot:
+    if message.author.bot:  # len(message.content) > 100 or message.author.bot:
         return
     if any(x in message.content for x in thanks_notation):
         ctx = await bot.get_context(message)
