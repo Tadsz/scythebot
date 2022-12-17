@@ -63,11 +63,13 @@ class OpenAI(commands.Cog):
             """
         ).fetchone()
 
-        if recent_activity is not None:
-            if recent_activity[0] > 10_000:
-                return f"You have used over {recent_activity[0]} in an hour. Slow down and try again later."
-            if recent_activity[1] > 100_000:
-                return f"You have used over {recent_activity[1]} in one day. Slow down and try again later."
+        if recent_activity:
+            if recent_activity[0]:
+                if recent_activity[0] > 10_000:
+                    return f"You have used over {recent_activity[0]} in an hour. Slow down and try again later."
+            if recent_activity[1]:
+                if recent_activity[1] > 100_000:
+                    return f"You have used over {recent_activity[1]} in one day. Slow down and try again later."
 
         # build a new prompt with the chat_history context:
         if len(self.chat_history) > 0:
