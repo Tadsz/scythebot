@@ -7,9 +7,6 @@ import os
 import json
 import datetime
 import sqlite3
-import random
-import discord
-import numpy as np
 from discord.ext import commands
 from dotenv import load_dotenv
 import openai
@@ -45,7 +42,6 @@ class OpenAI(commands.Cog):
 
         last_hour = (datetime.datetime.utcnow() - datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
         last_day = (datetime.datetime.utcnow() - datetime.timedelta(hours=24)).strftime("%Y-%m-%d %H:%M:%S")
-        print(last_hour)
         recent_activity = self.cursor.execute(
             f"""
             WITH hourly AS (SELECT row_number() over(order by cr.id) rn, SUM(input_tokens) + SUM(output_tokens) as tokens_hour
@@ -82,6 +78,8 @@ class OpenAI(commands.Cog):
             full_message = prompt
 
         expected_prompt_tokens = int(len(full_message.split()) * 1.25)
+        if self.max_tokens - expected_prompt_tokens < 16:
+            return "Input too large for any possible and/or meaningful output. Reduce the input or clear history using the !clear_history command."
         try:
             # Use the OpenAI API to generate a response to the prompt
             response = openai.Completion.create(engine=self.engine,
@@ -168,7 +166,6 @@ class OpenAI(commands.Cog):
 
     @commands.command(name='textset', help='Set settings for generating a textual response')
     async def set_text_settings(self, ctx, *kwargs):
-        print(kwargs)
         await ctx.message.add_reaction(self.bot_emoji)
         kwargs = await self.kwargs_parser(kwargs)
 
