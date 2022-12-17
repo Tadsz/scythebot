@@ -58,6 +58,7 @@ else:
 
 bot.add_cog(Scythe(bot))
 bot.add_cog(Proverbs(bot))
+bot.add_cog(Utils(bot))
 bot.add_cog(OpenAI(bot))
 
 @bot.event
